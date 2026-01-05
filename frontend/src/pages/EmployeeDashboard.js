@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { jsPDF } from 'jspdf';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Row, Col, Card, Button, Form, Table, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -44,7 +45,26 @@ const EmployeeDashboard = () => {
 
   const handleLeaveSubmit = (e) => {
     e.preventDefault();
-    alert('Leave application submitted successfully!');
+
+    // Generate PDF
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text("Leave Request Application", 20, 20);
+
+    doc.setFontSize(12);
+    doc.text(`Employee Name: ${user ? user.name : 'N/A'}`, 20, 40);
+    doc.text(`Employee ID: ${user ? user.employeeId : 'N/A'}`, 20, 50);
+    doc.text(`Department: ${user ? user.department : 'N/A'}`, 20, 60);
+
+    doc.text(`Leave Type: ${leaveForm.leaveType}`, 20, 80);
+    doc.text(`Start Date: ${leaveForm.startDate}`, 20, 90);
+    doc.text(`End Date: ${leaveForm.endDate}`, 20, 100);
+    doc.text(`Reason:`, 20, 120);
+    doc.text(leaveForm.reason, 20, 130);
+
+    doc.save(`leave_request_${leaveForm.startDate}.pdf`);
+
+    alert('Leave application submitted successfully! PDF downloaded.');
     setLeaveForm({
       leaveType: 'Sick',
       startDate: '',
@@ -137,7 +157,7 @@ const EmployeeDashboard = () => {
               <Form onSubmit={handleLeaveSubmit}>
                 <Form.Group className="mb-3">
                   <Form.Label>Leave Type</Form.Label>
-                  <Form.Select 
+                  <Form.Select
                     name="leaveType"
                     value={leaveForm.leaveType}
                     onChange={handleLeaveChange}
@@ -149,8 +169,8 @@ const EmployeeDashboard = () => {
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label>Start Date</Form.Label>
-                  <Form.Control 
-                    type="date" 
+                  <Form.Control
+                    type="date"
                     name="startDate"
                     required
                     value={leaveForm.startDate}
@@ -159,8 +179,8 @@ const EmployeeDashboard = () => {
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label>End Date</Form.Label>
-                  <Form.Control 
-                    type="date" 
+                  <Form.Control
+                    type="date"
                     name="endDate"
                     required
                     value={leaveForm.endDate}
@@ -169,9 +189,9 @@ const EmployeeDashboard = () => {
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label>Reason</Form.Label>
-                  <Form.Control 
-                    as="textarea" 
-                    rows={3} 
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
                     name="reason"
                     required
                     value={leaveForm.reason}

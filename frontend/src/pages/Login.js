@@ -7,7 +7,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useContext(AuthContext);
+  const { login, loginAsAdmin } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
@@ -40,6 +40,18 @@ const Login = () => {
               </Form.Group>
               <Button className="w-100" type="submit">
                 Log In
+              </Button>
+              <div className="text-center my-2">OR</div>
+              <Button
+                variant="secondary"
+                className="w-100"
+                onClick={() => {
+                  loginAsAdmin();
+                  navigate('/admin-dashboard');
+                }}
+                type="button"
+              >
+                Login as Admin
               </Button>
             </Form>
             <div className="w-100 text-center mt-3">

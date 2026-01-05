@@ -13,6 +13,20 @@ const login = (email, password) => {
   return mockUser;
 };
 
+const loginAsAdmin = () => {
+  const mockAdmin = {
+    name: 'Admin User',
+    email: 'admin@company.com',
+    role: 'admin',
+    mobileNumber: '9876543210',
+    employeeId: 'ADMIN001',
+    department: 'Administration',
+    profilePhotoUrl: 'https://via.placeholder.com/150'
+  };
+  localStorage.setItem('user', JSON.stringify(mockAdmin));
+  return mockAdmin;
+};
+
 const register = (userData) => {
   // Mock registration
   const mockUser = {
@@ -39,6 +53,7 @@ const getCurrentUser = () => {
 
 const authService = {
   login,
+  loginAsAdmin,
   register,
   logout,
   getCurrentUser,

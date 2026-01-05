@@ -21,6 +21,12 @@ export const AuthProvider = ({ children }) => {
     return user;
   };
 
+  const loginAsAdmin = () => {
+    const user = authService.loginAsAdmin();
+    setUser(user);
+    return user;
+  };
+
   const logout = () => {
     authService.logout();
     setUser(null);
@@ -33,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, loading }}>
+    <AuthContext.Provider value={{ user, login, loginAsAdmin, logout, register, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );
