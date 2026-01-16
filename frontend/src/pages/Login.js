@@ -10,14 +10,14 @@ const Login = () => {
   const { login, loginAsAdmin } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      login(email, password);
+      await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError('Failed to login. Please check your credentials.');
+      setError('Failed to login. Please check your credentials (' + (err.response?.data?.error || err.message) + ')');
       console.error(err);
     }
   };

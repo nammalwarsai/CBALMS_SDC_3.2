@@ -25,7 +25,7 @@ const Signup = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -35,10 +35,10 @@ const Signup = () => {
     }
 
     try {
-      register(formData);
+      await register(formData);
       navigate('/dashboard');
     } catch (err) {
-      setError('Failed to create account. Please try again.');
+      setError('Failed to create account. ' + (err.response?.data?.error || err.message));
       console.error(err);
     }
   };
@@ -53,30 +53,30 @@ const Signup = () => {
             <Form onSubmit={handleSubmit}>
               <Form.Group id="name" className="mb-3">
                 <Form.Label>Full Name</Form.Label>
-                <Form.Control 
-                  type="text" 
+                <Form.Control
+                  type="text"
                   name="name"
-                  required 
-                  value={formData.name} 
-                  onChange={handleChange} 
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
                 />
               </Form.Group>
               <Form.Group id="email" className="mb-3">
                 <Form.Label>Email</Form.Label>
-                <Form.Control 
-                  type="email" 
+                <Form.Control
+                  type="email"
                   name="email"
-                  required 
-                  value={formData.email} 
-                  onChange={handleChange} 
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
                 />
               </Form.Group>
               <Form.Group id="role" className="mb-3">
                 <Form.Label>Role</Form.Label>
-                <Form.Select 
+                <Form.Select
                   name="role"
-                  required 
-                  value={formData.role} 
+                  required
+                  value={formData.role}
                   onChange={handleChange}
                 >
                   <option value="employee">Employee</option>
@@ -85,53 +85,53 @@ const Signup = () => {
               </Form.Group>
               <Form.Group id="department" className="mb-3">
                 <Form.Label>Department</Form.Label>
-                <Form.Control 
-                  type="text" 
+                <Form.Control
+                  type="text"
                   name="department"
-                  value={formData.department} 
-                  onChange={handleChange} 
+                  value={formData.department}
+                  onChange={handleChange}
                 />
               </Form.Group>
               <Form.Group id="mobileNumber" className="mb-3">
                 <Form.Label>Mobile Number</Form.Label>
-                <Form.Control 
-                  type="tel" 
+                <Form.Control
+                  type="tel"
                   name="mobileNumber"
                   required
-                  value={formData.mobileNumber} 
+                  value={formData.mobileNumber}
                   onChange={handleChange}
-                  placeholder="Enter your mobile number" 
+                  placeholder="Enter your mobile number"
                 />
               </Form.Group>
               <Form.Group id="employeeId" className="mb-3">
                 <Form.Label>Employee ID</Form.Label>
-                <Form.Control 
-                  type="text" 
+                <Form.Control
+                  type="text"
                   name="employeeId"
                   required
-                  value={formData.employeeId} 
+                  value={formData.employeeId}
                   onChange={handleChange}
-                  placeholder="Enter your employee ID" 
+                  placeholder="Enter your employee ID"
                 />
               </Form.Group>
               <Form.Group id="password" className="mb-3">
                 <Form.Label>Password</Form.Label>
-                <Form.Control 
-                  type="password" 
+                <Form.Control
+                  type="password"
                   name="password"
-                  required 
-                  value={formData.password} 
-                  onChange={handleChange} 
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
                 />
               </Form.Group>
               <Form.Group id="confirmPassword" className="mb-3">
                 <Form.Label>Confirm Password</Form.Label>
-                <Form.Control 
-                  type="password" 
+                <Form.Control
+                  type="password"
                   name="confirmPassword"
-                  required 
-                  value={formData.confirmPassword} 
-                  onChange={handleChange} 
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                 />
               </Form.Group>
               <Button className="w-100" type="submit">

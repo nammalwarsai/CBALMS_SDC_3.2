@@ -8,23 +8,35 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-    }
-    setLoading(false);
+    checkUserLoggedIn();
   }, []);
 
-  const login = (email, password) => {
-    const user = authService.login(email, password);
-    setUser(user);
-    return user;
+  const checkUserLoggedIn = async () => {
+    try {
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+      }
+    } catch (error) {
+      console.error("Session check failed", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const loginAsAdmin = () => {
-    const user = authService.loginAsAdmin();
-    setUser(user);
-    return user;
+  const login = async (email, password) => {
+    const data = await authService.login(email, password);
+    // data.user should be returned from login
+    // authService sets localStorage, we set state
+    if (data.user) {
+      setUser(data.user);
+    }
+    return data.user;
+  };
+
+  const loginAsAdmin = async () => {
+    // Deprecated or redirect to login
+    return login('admin@example.com', 'admin_password_placeholder');
   };
 
   const logout = () => {
@@ -32,10 +44,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const register = (userData) => {
-    const user = authService.register(userData);
-    setUser(user);
-    return user;
+  const register = async (userData) => {
+    const data = await authService.register(userData);
+    if (data.user) {
+      setUser(data.user);
+    }
+    return data.user;
   };
 
   return (
