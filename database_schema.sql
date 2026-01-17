@@ -23,3 +23,30 @@ create policy "Users can update own profile" on profiles
 
 -- Policy: Admin (service role) has full access - Implicit, but if RLS is strict:
 -- Supabase service role bypasses RLS by default.
+
+-- Add status and photo columns to profiles
+ALTER TABLE profiles ADD COLUMN present_status_of_employee text DEFAULT 'Absent';
+ALTER TABLE profiles ADD COLUMN profile_photo text;
+
+-- Create attendance table
+CREATE TABLE attendance (
+  id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+  employee_id uuid REFERENCES profiles(id) NOT NULL,
+  date date NOT NULL,
+  check_in time,
+  check_out time,
+  status text DEFAULT 'Absent',
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RLS for attendance
+ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own attendance" ON attendance
+  FOR SELECT USING (auth.uid() = employee_id);
+
+CREATE POLICY "Users can insert own attendance" ON attendance
+  FOR INSERT WITH CHECK (auth.uid() = employee_id);
+
+CREATE POLICY "Users can update own attendance" ON attendance
+  FOR UPDATE USING (auth.uid() = employee_id);

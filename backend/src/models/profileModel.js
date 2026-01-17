@@ -40,6 +40,14 @@ const ProfileModel = {
             .single();
         if (error) throw error;
         return data;
+    },
+
+    async getAllProfiles() {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*');
+        if (error) throw error;
+        return data;
     }
 };
 

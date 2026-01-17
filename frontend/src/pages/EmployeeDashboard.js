@@ -1,13 +1,17 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Row, Col, Card, Button, Form, Table, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import attendanceService from '../services/attendanceService';
 
 const EmployeeDashboard = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [attendanceStatus, setAttendanceStatus] = useState('Not Checked In'); // 'Not Checked In', 'Checked In', 'Checked Out'
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [leaveForm, setLeaveForm] = useState({
     leaveType: 'Sick',
     startDate: '',
@@ -15,32 +19,56 @@ const EmployeeDashboard = () => {
     reason: ''
   });
 
-  // Mock data for attendance history
-  const attendanceHistory = [
-    { date: '2025-12-20', checkIn: '09:00 AM', checkOut: '05:30 PM', status: 'Present' },
-    { date: '2025-12-19', checkIn: '09:15 AM', checkOut: '05:45 PM', status: 'Late' },
-    { date: '2025-12-18', checkIn: '09:00 AM', checkOut: '05:30 PM', status: 'Present' },
-  ];
+  // Fetch initial data
+  useEffect(() => {
+    if (user?.id) {
+      fetchAttendanceData();
+    }
+  }, [user]);
 
-  // Mock data for leave history
-  const leaveHistory = [
-    { type: 'Sick', startDate: '2025-12-10', endDate: '2025-12-11', status: 'Approved' },
-    { type: 'Casual', startDate: '2025-12-05', endDate: '2025-12-05', status: 'Pending' },
-  ];
+  const fetchAttendanceData = async () => {
+    try {
+      const [historyRes, statusRes] = await Promise.all([
+        attendanceService.getHistory(user.id),
+        attendanceService.getStatus(user.id)
+      ]);
+
+      setAttendanceHistory(historyRes.data || []);
+      setAttendanceStatus(statusRes.status);
+      setIsCheckedIn(statusRes.status === 'Checked In');
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching attendance data", error);
+      setLoading(false);
+    }
+  };
+
+  // Mock data for leave history (Task only mentioned removing dummy data for attendance? Or all? "remove all the dummy data in the .../employee-dashboard". I should handle leave history too but I don't have backend for leaves yet. I will keep mock leave for now or clear it to empty array if instructed STRICTLY "remove all dummy data". The request says "remove all the dummy data". I'll clear it.)
+  const leaveHistory = [];
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const handleCheckIn = () => {
-    setIsCheckedIn(true);
-    alert('Checked in successfully!');
+  const handleCheckIn = async () => {
+    try {
+      await attendanceService.checkIn(user.id);
+      alert('Checked in successfully!');
+      fetchAttendanceData(); // Refresh data
+    } catch (error) {
+      alert(error.response?.data?.error || 'Check-in failed');
+    }
   };
 
-  const handleCheckOut = () => {
-    setIsCheckedIn(false);
-    alert('Checked out successfully!');
+  const handleCheckOut = async () => {
+    try {
+      await attendanceService.checkOut(user.id);
+      alert('Checked out successfully!');
+      fetchAttendanceData();
+    } catch (error) {
+      alert(error.response?.data?.error || 'Check-out failed');
+    }
   };
 
   const handleLeaveSubmit = (e) => {
@@ -104,18 +132,25 @@ const EmployeeDashboard = () => {
           <Card className="text-center">
             <Card.Body>
               <Card.Title>Check In/Out</Card.Title>
-              {!isCheckedIn ? (
+              {attendanceStatus === 'Checked In' ? (
+                <Button variant="warning" onClick={handleCheckOut}>
+                  Check Out
+                </Button>
+              ) : attendanceStatus === 'Not Checked In' ? (
                 <Button variant="success" onClick={handleCheckIn}>
                   Check In
                 </Button>
               ) : (
-                <Button variant="warning" onClick={handleCheckOut}>
-                  Check Out
+                <Button variant="secondary" disabled>
+                  Checked Out
                 </Button>
               )}
               <p className="mt-2 mb-0">
-                <Badge bg={isCheckedIn ? 'success' : 'secondary'}>
-                  {isCheckedIn ? 'Checked In' : 'Not Checked In'}
+                <Badge bg={
+                  attendanceStatus === 'Checked In' ? 'success' :
+                    attendanceStatus === 'Checked Out' ? 'danger' : 'secondary'
+                }>
+                  {attendanceStatus}
                 </Badge>
               </p>
             </Card.Body>
@@ -124,7 +159,7 @@ const EmployeeDashboard = () => {
         <Col md={6} lg={3} className="mb-3">
           <Card className="text-center">
             <Card.Body>
-              <h3>12</h3>
+              <h3>--</h3>
               <Card.Text className="text-muted">Leave Balance</Card.Text>
             </Card.Body>
           </Card>
@@ -132,7 +167,7 @@ const EmployeeDashboard = () => {
         <Col md={6} lg={3} className="mb-3">
           <Card className="text-center">
             <Card.Body>
-              <h3>22</h3>
+              <h3>{attendanceHistory.filter(r => r.status === 'Present').length}</h3>
               <Card.Text className="text-muted">Days Present</Card.Text>
             </Card.Body>
           </Card>
@@ -140,7 +175,7 @@ const EmployeeDashboard = () => {
         <Col md={6} lg={3} className="mb-3">
           <Card className="text-center">
             <Card.Body>
-              <h3>2</h3>
+              <h3>--</h3>
               <Card.Text className="text-muted">Days Absent</Card.Text>
             </Card.Body>
           </Card>
@@ -222,18 +257,22 @@ const EmployeeDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {leaveHistory.map((leave, index) => (
-                    <tr key={index}>
-                      <td>{leave.type}</td>
-                      <td>{leave.startDate}</td>
-                      <td>{leave.endDate}</td>
-                      <td>
-                        <Badge bg={leave.status === 'Approved' ? 'success' : 'warning'}>
-                          {leave.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
+                  {leaveHistory.length === 0 ? (
+                    <tr><td colSpan="4" className="text-center">No leave history found</td></tr>
+                  ) : (
+                    leaveHistory.map((leave, index) => (
+                      <tr key={index}>
+                        <td>{leave.type}</td>
+                        <td>{leave.startDate}</td>
+                        <td>{leave.endDate}</td>
+                        <td>
+                          <Badge bg={leave.status === 'Approved' ? 'success' : 'warning'}>
+                            {leave.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </Table>
             </Card.Body>
@@ -258,18 +297,22 @@ const EmployeeDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {attendanceHistory.map((record, index) => (
-                    <tr key={index}>
-                      <td>{record.date}</td>
-                      <td>{record.checkIn}</td>
-                      <td>{record.checkOut}</td>
-                      <td>
-                        <Badge bg={record.status === 'Present' ? 'success' : 'warning'}>
-                          {record.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
+                  {attendanceHistory.length === 0 ? (
+                    <tr><td colSpan="4" className="text-center">No attendance records found</td></tr>
+                  ) : (
+                    attendanceHistory.map((record, index) => (
+                      <tr key={index}>
+                        <td>{record.date}</td>
+                        <td>{record.check_in || '-'}</td>
+                        <td>{record.check_out || '-'}</td>
+                        <td>
+                          <Badge bg={record.status === 'Present' ? 'success' : 'warning'}>
+                            {record.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </Table>
             </Card.Body>
