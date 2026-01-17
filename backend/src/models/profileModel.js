@@ -22,6 +22,16 @@ const ProfileModel = {
         return data;
     },
 
+    async checkAdminExists() {
+        const { count, error } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'admin');
+
+        if (error) throw error;
+        return count > 0;
+    },
+
     async createProfile(profileData) {
         const { data, error } = await supabase
             .from('profiles')

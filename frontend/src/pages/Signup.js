@@ -83,23 +83,25 @@ const Signup = () => {
                   <option value="admin">Admin</option>
                 </Form.Select>
               </Form.Group>
-              <Form.Group id="department" className="mb-3">
-                <Form.Label>Department</Form.Label>
-                <Form.Select
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                >
-                  <option value="">Select Department</option>
-                  <option value="CSE">CSE</option>
-                  <option value="EEE">EEE</option>
-                  <option value="ECE">ECE</option>
-                  <option value="ME">ME</option>
-                  <option value="CE">CE</option>
-                  <option value="AI/DS">AI/DS</option>
-                  <option value="IT">IT</option>
-                </Form.Select>
-              </Form.Group>
+              {formData.role !== 'admin' && (
+                <Form.Group id="department" className="mb-3">
+                  <Form.Label>Department</Form.Label>
+                  <Form.Select
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select Department</option>
+                    <option value="CSE">CSE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="ECE">ECE</option>
+                    <option value="ME">ME</option>
+                    <option value="CE">CE</option>
+                    <option value="AI/DS">AI/DS</option>
+                    <option value="IT">IT</option>
+                  </Form.Select>
+                </Form.Group>
+              )}
               <Form.Group id="mobileNumber" className="mb-3">
                 <Form.Label>Mobile Number</Form.Label>
                 <Form.Control

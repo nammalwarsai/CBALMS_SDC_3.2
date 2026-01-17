@@ -11,6 +11,7 @@ const normalizeUser = (user, profile) => {
         mobileNumber: profileData.mobile_number || '',
         employeeId: profileData.employee_id || '',
         role: profileData.role || 'employee',
+        profilePhotoUrl: profileData.profile_photo || '', // Map DB field to frontend prop
         profile: profileData // Keep original profile just in case
     };
 };
@@ -18,7 +19,20 @@ const normalizeUser = (user, profile) => {
 const authController = {
     async signup(req, res) {
         try {
-            const { email, password, fullName, role, department, mobileNumber, employeeId } = req.body;
+            const { email, password, fullName, role, department, mobileNumber, employeeId, profilePhoto } = req.body;
+
+            // 0. Check for Single Admin Policy
+            if (role === 'admin') {
+                try {
+                    const adminExists = await ProfileModel.checkAdminExists();
+                    if (adminExists) {
+                        return res.status(400).json({ error: 'An Admin account already exists. Only one Admin is allowed.' });
+                    }
+                } catch (err) {
+                    console.error('Error checking admin existence:', err);
+                    return res.status(500).json({ error: 'Server error checking admin status' });
+                }
+            }
 
             // 1. Create Auth User
             const { data: authData, error: authError } = await AuthModel.signUp(email, password);
@@ -36,9 +50,10 @@ const authController = {
                     email: user.email,
                     full_name: fullName,
                     role: role || 'employee',
-                    department,
+                    department: role === 'admin' ? '' : department, // Ensure department is empty for admin
                     mobile_number: mobileNumber,
-                    employee_id: employeeId
+                    employee_id: employeeId,
+                    profile_photo: profilePhoto || null
                 };
 
                 try {
@@ -124,13 +139,14 @@ const authController = {
     async updateProfile(req, res) {
         try {
             const user = req.user;
-            const { name, mobileNumber } = req.body;
+            const { name, mobileNumber, profilePhoto } = req.body;
 
             // Prepare updates. Only allow specific fields.
-            // Database is flat: full_name, mobile_number
+            // Database is flat: full_name, mobile_number, profile_photo
             const updates = {};
             if (name !== undefined) updates.full_name = name;
             if (mobileNumber !== undefined) updates.mobile_number = mobileNumber;
+            if (profilePhoto !== undefined) updates.profile_photo = profilePhoto;
 
             if (Object.keys(updates).length === 0) {
                 return res.status(400).json({ error: 'No valid fields to update' });

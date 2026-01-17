@@ -28,6 +28,10 @@ const Profile = () => {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        alert("File size too large. Please select an image under 2MB.");
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfilePhoto(reader.result);
@@ -40,25 +44,23 @@ const Profile = () => {
     try {
       const updates = {
         name: profileData.name,
-        mobileNumber: profileData.mobileNumber
+        mobileNumber: profileData.mobileNumber,
+        profilePhoto: profilePhoto // Send base64 image string
       };
 
       const { user: updatedUser } = await authService.updateUserProfile(updates);
 
-      // Update local state and context if needed (though context usually pulls from local storage or api)
-      // Since authService updates localStorage, we might need to trigger a context refresh or just simple state update
-      // Taking a shortcut: manually updating context user state if exposed, but context relies on checking local storage or state
-      // We can force a reload or if setUser is available from context...
-      // In this file, we only destructured { user, logout }. Let's assume we can also get setUser if we change context, 
-      // but for now let's just alert and re-render.
+      // Update local state
+      setProfileData({
+        ...profileData,
+        name: updatedUser.name,
+        mobileNumber: updatedUser.mobileNumber
+      });
+      setProfilePhoto(updatedUser.profilePhotoUrl || 'https://via.placeholder.com/150');
 
       setIsEditing(false);
       alert('Profile updated successfully!');
-      // Ideally we should update the context's user object to reflect changes immediately without reload
-      // But looking at AuthContext, it doesn't expose setUser directly in the return value?
-      // Let's check AuthContext: value={{ user, login, loginAsAdmin, logout, register, loading }}
-      // It doesn't expose setUser.
-      // However, we can reload the page to fetch fresh data or simpler: navigation.
+      // Reload to ensure all contexts are updated if needed, though state update above handles local view
       window.location.reload();
 
     } catch (error) {
