@@ -6,7 +6,7 @@ const AuthModel = require('../src/models/authModel');
 // But better to test the flow. LETS TEST MODEL FIRST.
 
 async function testAuthFlow() {
-    const email = `test_${Date.now()}@example.com`;
+    const email = `testuser${Math.floor(Math.random() * 10000)}@test.com`;
     const password = 'Password123!';
 
     console.log('1. Attempting Signup with:', email);

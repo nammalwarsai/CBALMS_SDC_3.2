@@ -11,6 +11,17 @@ const ProfileModel = {
         return data;
     },
 
+    async updateProfile(id, updates) {
+        const { data, error } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
     async createProfile(profileData) {
         const { data, error } = await supabase
             .from('profiles')

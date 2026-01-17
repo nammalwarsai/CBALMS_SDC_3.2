@@ -48,12 +48,21 @@ const loginAsAdmin = async () => {
   return null;
 };
 
+const updateUserProfile = async (data) => {
+  const response = await api.put('/auth/update-profile', data);
+  if (response.data.user) {
+    localStorage.setItem('user', JSON.stringify(response.data.user));
+  }
+  return response.data;
+};
+
 const authService = {
   register,
   login,
   logout,
   getCurrentUser,
-  loginAsAdmin // Keep for temporary compatibility, maybe remove later
+  loginAsAdmin, // Keep for temporary compatibility, maybe remove later
+  updateUserProfile
 };
 
 export default authService;
