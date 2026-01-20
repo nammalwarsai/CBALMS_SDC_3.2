@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import authService from '../services/authService';
-import { Container, Row, Col, Card, Button, Form, Image } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Image, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
@@ -96,35 +96,36 @@ const Profile = () => {
   };
 
   return (
-    <Container className="mt-4">
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
+    <Container className="mt-4 px-4">
+      {/* Header */}
+      <div className="dashboard-header">
+        <div className="d-flex justify-content-between align-items-center flex-wrap">
+          <div>
             <h2>My Profile</h2>
-            <div>
-              <Button variant="secondary" className="me-2" onClick={handleBack}>
-                Back to Dashboard
-              </Button>
-              <Button variant="danger" onClick={handleLogout}>
-                Log Out
-              </Button>
-            </div>
+            <p className="text-muted mb-0">Manage your personal information</p>
           </div>
-        </Col>
-      </Row>
+          <div className="mt-3 mt-md-0">
+            <Button variant="secondary" className="me-2" onClick={handleBack}>
+              Back to Dashboard
+            </Button>
+            <Button variant="danger" onClick={handleLogout}>
+              Log Out
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <Row>
         <Col lg={4} className="mb-4">
-          <Card>
+          <Card className="content-card">
             <Card.Body className="text-center">
-              <Image
-                src={profilePhoto}
-                roundedCircle
-                width={150}
-                height={150}
-                className="mb-3"
-                style={{ objectFit: 'cover' }}
-              />
+              <div className="profile-image-container mx-auto mb-3">
+                <Image
+                  src={profilePhoto}
+                  alt="Profile"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
               {isEditing && (
                 <Form.Group className="mb-3">
                   <Form.Label>Change Profile Photo</Form.Label>
@@ -134,19 +135,21 @@ const Profile = () => {
                     onChange={handlePhotoChange}
                   />
                   <Form.Text className="text-muted">
-                    Select a new profile photo
+                    Max size: 2MB
                   </Form.Text>
                 </Form.Group>
               )}
-              <h4>{profileData.name}</h4>
-              <p className="text-muted">{profileData.role === 'admin' ? 'Administrator' : 'Employee'}</p>
-              <p className="text-muted">{profileData.department}</p>
+              <h4 className="mb-2">{profileData.name}</h4>
+              <Badge bg={profileData.role === 'admin' ? 'primary' : 'info'} className="mb-2">
+                {profileData.role === 'admin' ? 'Administrator' : 'Employee'}
+              </Badge>
+              <p className="text-muted mb-0">{profileData.department}</p>
             </Card.Body>
           </Card>
         </Col>
 
         <Col lg={8} className="mb-4">
-          <Card>
+          <Card className="content-card">
             <Card.Header className="d-flex justify-content-between align-items-center">
               <strong>Profile Information</strong>
               {!isEditing ? (
@@ -181,7 +184,7 @@ const Profile = () => {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Email</Form.Label>
+                      <Form.Label>Email Address</Form.Label>
                       <Form.Control
                         type="email"
                         name="email"
@@ -202,6 +205,7 @@ const Profile = () => {
                         value={profileData.mobileNumber}
                         onChange={handleChange}
                         disabled={!isEditing}
+                        placeholder="Enter mobile number"
                       />
                     </Form.Group>
                   </Col>

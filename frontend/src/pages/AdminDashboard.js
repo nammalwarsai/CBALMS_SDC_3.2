@@ -55,28 +55,29 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Container fluid className="mt-4">
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
+    <Container fluid className="mt-4 px-4">
+      {/* Header */}
+      <div className="dashboard-header">
+        <div className="d-flex justify-content-between align-items-center flex-wrap">
+          <div>
             <h2>Admin Dashboard</h2>
-            <div>
-              <Button variant="info" className="me-2" onClick={() => navigate('/profile')}>
-                My Profile
-              </Button>
-              <Button variant="danger" onClick={handleLogout}>
-                Log Out
-              </Button>
-            </div>
+            <p className="text-muted mb-0">Welcome, {user ? user.name : 'Admin'}! ({user?.email})</p>
           </div>
-          <p className="text-muted">Welcome, {user ? user.name : 'Admin'}! ({user?.email})</p>
-        </Col>
-      </Row>
+          <div className="mt-3 mt-md-0">
+            <Button variant="info" className="me-2" onClick={() => navigate('/profile')}>
+              My Profile
+            </Button>
+            <Button variant="danger" onClick={handleLogout}>
+              Log Out
+            </Button>
+          </div>
+        </div>
+      </div>
 
-      {/* Stats Row (Placeholders for now until aggregation API exists) */}
+      {/* Stats Row */}
       <Row className="mb-4">
         <Col md={6} lg={3} className="mb-3">
-          <Card className="text-center bg-primary text-white">
+          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)', color: 'white' }}>
             <Card.Body>
               <h3>{employees.length}</h3>
               <Card.Text>Total Employees</Card.Text>
@@ -84,10 +85,26 @@ const AdminDashboard = () => {
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="text-center bg-success text-white">
+          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white' }}>
             <Card.Body>
               <h3>--</h3>
               <Card.Text>Present Today</Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={6} lg={3} className="mb-3">
+          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
+            <Card.Body>
+              <h3>--</h3>
+              <Card.Text>On Leave</Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={6} lg={3} className="mb-3">
+          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', color: 'white' }}>
+            <Card.Body>
+              <h3>--</h3>
+              <Card.Text>Absent Today</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -96,13 +113,17 @@ const AdminDashboard = () => {
       {/* Employee List Table */}
       <Row className="mb-4">
         <Col>
-          <Card>
-            <Card.Header>
+          <Card className="content-card">
+            <Card.Header className="d-flex justify-content-between align-items-center">
               <strong>All Employees</strong>
+              <span className="badge bg-primary">{employees.length} Total</span>
             </Card.Header>
             <Card.Body>
               {loading ? (
-                <div className="text-center"><Spinner animation="border" /></div>
+                <div className="text-center py-5">
+                  <Spinner animation="border" variant="primary" />
+                  <p className="mt-3 text-muted">Loading employees...</p>
+                </div>
               ) : (
                 <Table striped bordered hover responsive>
                   <thead>
@@ -111,17 +132,17 @@ const AdminDashboard = () => {
                       <th>Department</th>
                       <th>Employee ID</th>
                       <th>Mobile</th>
-                      <th>Current Status Of Employee </th>
+                      <th>Current Status</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {employees.length === 0 ? (
-                      <tr><td colSpan="6" className="text-center">No employees found</td></tr>
+                      <tr><td colSpan="6" className="text-center text-muted py-4">No employees found</td></tr>
                     ) : (
                       employees.map((emp) => (
                         <tr key={emp.id}>
-                          <td>{emp.full_name}</td>
+                          <td><strong>{emp.full_name}</strong></td>
                           <td>{emp.department}</td>
                           <td>{emp.employee_id}</td>
                           <td>{emp.mobile_number}</td>
@@ -160,19 +181,7 @@ const AdminDashboard = () => {
             <Container>
               <Row>
                 <Col md={4} className="text-center mb-3">
-                  <div
-                    style={{
-                      width: '150px',
-                      height: '150px',
-                      borderRadius: '50%',
-                      backgroundColor: '#e9ecef',
-                      margin: '0 auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden'
-                    }}
-                  >
+                  <div className="profile-image-container mx-auto" style={{ width: '150px', height: '150px', borderRadius: '50%', overflow: 'hidden', border: '4px solid white', boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.1)' }}>
                     {selectedEmployee.profile_photo ? (
                       <img
                         src={selectedEmployee.profile_photo}
@@ -180,29 +189,36 @@ const AdminDashboard = () => {
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     ) : (
-                      <span className="text-muted">Photo</span>
+                      <div className="d-flex align-items-center justify-content-center h-100 bg-light text-muted">
+                        No Photo
+                      </div>
                     )}
                   </div>
                 </Col>
                 <Col md={8}>
-                  <h4>{selectedEmployee.full_name}</h4>
-                  <p><strong>Email:</strong> {selectedEmployee.email}</p>
-                  <p><strong>Employee ID:</strong> {selectedEmployee.employee_id}</p>
-                  <p><strong>Department:</strong> {selectedEmployee.department}</p>
-                  <p><strong>Mobile:</strong> {selectedEmployee.mobile_number}</p>
-                  <p><strong>Current Status Of Employee:</strong> {selectedEmployee.present_status_of_employee || 'Absent'}</p>
+                  <h4 className="mb-3">{selectedEmployee.full_name}</h4>
+                  <p className="mb-2"><strong>Email:</strong> {selectedEmployee.email}</p>
+                  <p className="mb-2"><strong>Employee ID:</strong> {selectedEmployee.employee_id}</p>
+                  <p className="mb-2"><strong>Department:</strong> {selectedEmployee.department}</p>
+                  <p className="mb-2"><strong>Mobile:</strong> {selectedEmployee.mobile_number}</p>
+                  <p className="mb-2">
+                    <strong>Current Status:</strong>{' '}
+                    <Badge bg={selectedEmployee.present_status_of_employee === 'Present' ? 'success' : 'secondary'}>
+                      {selectedEmployee.present_status_of_employee || 'Absent'}
+                    </Badge>
+                  </p>
                 </Col>
               </Row>
               <Row className="mt-4">
                 <Col>
-                  <h5>Recent Attendance</h5>
-                  <Table size="sm">
+                  <h5 className="mb-3">Recent Attendance</h5>
+                  <Table size="sm" bordered>
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>In</th>
-                        <th>Out</th>
-                        <th>Status For today</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -212,11 +228,15 @@ const AdminDashboard = () => {
                             <td>{rec.date}</td>
                             <td>{rec.check_in || '-'}</td>
                             <td>{rec.check_out || '-'}</td>
-                            <td>{rec.status}</td>
+                            <td>
+                              <Badge bg={rec.status === 'Present' ? 'success' : 'warning'}>
+                                {rec.status}
+                              </Badge>
+                            </td>
                           </tr>
                         ))
                       ) : (
-                        <tr><td colSpan="4">No recent records</td></tr>
+                        <tr><td colSpan="4" className="text-center text-muted">No recent records</td></tr>
                       )}
                     </tbody>
                   </Table>

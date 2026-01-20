@@ -44,11 +44,14 @@ const Signup = () => {
   };
 
   return (
-    <Container className="d-flex align-items-center justify-content-center" style={{ minHeight: "100vh" }}>
-      <div className="w-100" style={{ maxWidth: "500px" }}>
-        <Card>
+    <div className="auth-container">
+      <div className="w-100" style={{ maxWidth: "550px" }}>
+        <Card className="auth-card">
           <Card.Body>
-            <h2 className="text-center mb-4">Sign Up</h2>
+            <div className="text-center mb-4">
+              <h2>Create Account</h2>
+              <p className="text-muted">Join our attendance management system</p>
+            </div>
             {error && <Alert variant="danger">{error}</Alert>}
             <Form onSubmit={handleSubmit}>
               <Form.Group id="name" className="mb-3">
@@ -59,16 +62,18 @@ const Signup = () => {
                   required
                   value={formData.name}
                   onChange={handleChange}
+                  placeholder="Enter your full name"
                 />
               </Form.Group>
               <Form.Group id="email" className="mb-3">
-                <Form.Label>Email</Form.Label>
+                <Form.Label>Email Address</Form.Label>
                 <Form.Control
                   type="email"
                   name="email"
                   required
                   value={formData.email}
                   onChange={handleChange}
+                  placeholder="Enter your email"
                 />
               </Form.Group>
               <Form.Group id="role" className="mb-3">
@@ -132,9 +137,10 @@ const Signup = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
+                  placeholder="Create a password"
                 />
               </Form.Group>
-              <Form.Group id="confirmPassword" className="mb-3">
+              <Form.Group id="confirmPassword" className="mb-4">
                 <Form.Label>Confirm Password</Form.Label>
                 <Form.Control
                   type="password"
@@ -142,19 +148,21 @@ const Signup = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  placeholder="Confirm your password"
                 />
               </Form.Group>
               <Button className="w-100" type="submit">
-                Sign Up
+                Create Account
               </Button>
             </Form>
-            <div className="w-100 text-center mt-3">
-              Already have an account? <a href="/login">Log In</a>
+            <div className="w-100 text-center mt-4">
+              <span className="text-muted">Already have an account? </span>
+              <a href="/login" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '600' }}>Log In</a>
             </div>
           </Card.Body>
         </Card>
       </div>
-    </Container>
+    </div>
   );
 };
 

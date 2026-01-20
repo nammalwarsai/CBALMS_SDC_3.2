@@ -109,43 +109,45 @@ const EmployeeDashboard = () => {
   };
 
   return (
-    <Container fluid className="mt-4">
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
+    <Container fluid className="mt-4 px-4">
+      {/* Header */}
+      <div className="dashboard-header">
+        <div className="d-flex justify-content-between align-items-center flex-wrap">
+          <div>
             <h2>Employee Dashboard</h2>
-            <div>
-              <Button variant="info" className="me-2" onClick={() => navigate('/profile')}>
-                My Profile
-              </Button>
-              <Button variant="danger" onClick={handleLogout}>
-                Log Out
-              </Button>
-            </div>
+            <p className="text-muted mb-0">Welcome, {user ? user.name : 'User'}! ({user?.email})</p>
           </div>
-          <p className="text-muted">Welcome, {user ? user.name : 'User'}! ({user?.email})</p>
-        </Col>
-      </Row>
+          <div className="mt-3 mt-md-0">
+            <Button variant="info" className="me-2" onClick={() => navigate('/profile')}>
+              My Profile
+            </Button>
+            <Button variant="danger" onClick={handleLogout}>
+              Log Out
+            </Button>
+          </div>
+        </div>
+      </div>
 
+      {/* Stats Cards */}
       <Row className="mb-4">
         <Col md={6} lg={3} className="mb-3">
-          <Card className="text-center">
+          <Card className="stat-card text-center">
             <Card.Body>
-              <Card.Title>Check In/Out</Card.Title>
+              <Card.Title className="mb-3">Check In/Out</Card.Title>
               {attendanceStatus === 'Checked In' ? (
-                <Button variant="warning" onClick={handleCheckOut}>
+                <Button variant="warning" size="lg" onClick={handleCheckOut}>
                   Check Out
                 </Button>
               ) : attendanceStatus === 'Not Checked In' ? (
-                <Button variant="success" onClick={handleCheckIn}>
+                <Button variant="success" size="lg" onClick={handleCheckIn}>
                   Check In
                 </Button>
               ) : (
-                <Button variant="secondary" disabled>
+                <Button variant="secondary" size="lg" disabled>
                   Checked Out
                 </Button>
               )}
-              <p className="mt-2 mb-0">
+              <p className="mt-3 mb-0">
                 <Badge bg={
                   attendanceStatus === 'Checked In' ? 'success' :
                     attendanceStatus === 'Checked Out' ? 'danger' : 'secondary'
@@ -157,7 +159,7 @@ const EmployeeDashboard = () => {
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="text-center">
+          <Card className="stat-card text-center bg-light">
             <Card.Body>
               <h3>--</h3>
               <Card.Text className="text-muted">Leave Balance</Card.Text>
@@ -165,15 +167,15 @@ const EmployeeDashboard = () => {
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="text-center">
+          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white' }}>
             <Card.Body>
               <h3>{attendanceHistory.filter(r => r.status === 'Present').length}</h3>
-              <Card.Text className="text-muted">Days Present</Card.Text>
+              <Card.Text>Days Present</Card.Text>
             </Card.Body>
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="text-center">
+          <Card className="stat-card text-center bg-light">
             <Card.Body>
               <h3>--</h3>
               <Card.Text className="text-muted">Days Absent</Card.Text>
@@ -182,9 +184,10 @@ const EmployeeDashboard = () => {
         </Col>
       </Row>
 
+      {/* Leave Form and History */}
       <Row>
         <Col lg={6} className="mb-4">
-          <Card>
+          <Card className="content-card">
             <Card.Header>
               <strong>Apply for Leave</strong>
             </Card.Header>
@@ -222,7 +225,7 @@ const EmployeeDashboard = () => {
                     onChange={handleLeaveChange}
                   />
                 </Form.Group>
-                <Form.Group className="mb-3">
+                <Form.Group className="mb-4">
                   <Form.Label>Reason</Form.Label>
                   <Form.Control
                     as="textarea"
@@ -231,9 +234,10 @@ const EmployeeDashboard = () => {
                     required
                     value={leaveForm.reason}
                     onChange={handleLeaveChange}
+                    placeholder="Please provide a reason for your leave"
                   />
                 </Form.Group>
-                <Button type="submit" variant="primary">
+                <Button type="submit" variant="primary" className="w-100">
                   Submit Leave Request
                 </Button>
               </Form>
@@ -242,7 +246,7 @@ const EmployeeDashboard = () => {
         </Col>
 
         <Col lg={6} className="mb-4">
-          <Card>
+          <Card className="content-card">
             <Card.Header>
               <strong>Leave History</strong>
             </Card.Header>
@@ -258,7 +262,7 @@ const EmployeeDashboard = () => {
                 </thead>
                 <tbody>
                   {leaveHistory.length === 0 ? (
-                    <tr><td colSpan="4" className="text-center">No leave history found</td></tr>
+                    <tr><td colSpan="4" className="text-center text-muted">No leave history found</td></tr>
                   ) : (
                     leaveHistory.map((leave, index) => (
                       <tr key={index}>
@@ -280,9 +284,10 @@ const EmployeeDashboard = () => {
         </Col>
       </Row>
 
+      {/* Attendance History */}
       <Row>
         <Col>
-          <Card>
+          <Card className="content-card">
             <Card.Header>
               <strong>Attendance History</strong>
             </Card.Header>
@@ -298,7 +303,7 @@ const EmployeeDashboard = () => {
                 </thead>
                 <tbody>
                   {attendanceHistory.length === 0 ? (
-                    <tr><td colSpan="4" className="text-center">No attendance records found</td></tr>
+                    <tr><td colSpan="4" className="text-center text-muted">No attendance records found</td></tr>
                   ) : (
                     attendanceHistory.map((record, index) => (
                       <tr key={index}>
