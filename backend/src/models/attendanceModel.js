@@ -67,6 +67,89 @@ const AttendanceModel = {
 
         if (error) throw error;
         return data;
+    },
+
+    // Get all attendance records within a date range with user details
+    async getAttendanceWithDetails(startDate, endDate) {
+        const { data, error } = await supabase
+            .from('attendance')
+            .select('*, profiles(full_name, employee_id, department, mobile_number)')
+            .gte('date', startDate)
+            .lte('date', endDate)
+            .order('date', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    },
+
+    // Auto-checkout logic
+    async processAutoCheckout() {
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const checkoutTime = '18:00:00'; // 6:00 PM
+
+        // 1. Fetch all records where check_out is NULL
+        // We will filter in application logic for more complex date usage or let Supabase filter if possible.
+        // For simplicity and correctness with timezones, let's fetch 'Present' or null checkout records.
+        const { data: openRecords, error } = await supabase
+            .from('attendance')
+            .select('*')
+            .is('check_out', null);
+
+        if (error) {
+            console.error("Error fetching open attendance records:", error);
+            throw error;
+        }
+
+        if (!openRecords || openRecords.length === 0) return { message: "No open records found." };
+
+        const updates = [];
+        for (const record of openRecords) {
+            // Check if record needs auto-checkout
+            // Condition: Date is BEFORE today OR (Date is TODAY AND Current Time > 18:00)
+            const recordDate = record.date;
+            
+            let shouldCheckout = false;
+
+            if (recordDate < today) {
+                shouldCheckout = true;
+            } else if (recordDate === today) {
+                // Check if current time is past 18:00
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                // 18:00 implies hour >= 18. If exactly 18:00 we might want to wait until 18:01 to be safe, but >= 18 is fine.
+                if (currentHour >= 18) {
+                    shouldCheckout = true;
+                }
+            }
+
+            if (shouldCheckout) {
+                // Update Attendance Record
+                const updateAttendance = supabase
+                    .from('attendance')
+                    .update({ 
+                        check_out: checkoutTime,
+                        status: 'Present' // explicit, though likely already Present
+                    })
+                    .eq('id', record.id);
+
+                // Update Profile Status (mark as Absent since they are now checked out)
+                const updateProfile = supabase
+                    .from('profiles')
+                    .update({ present_status_of_employee: 'Absent' })
+                    .eq('id', record.employee_id);
+
+                updates.push(updateAttendance);
+                updates.push(updateProfile);
+            }
+        }
+
+        if (updates.length > 0) {
+            await Promise.all(updates);
+            return { message: `Auto-checked out ${updates.length / 2} employees.` };
+        } else {
+            return { message: "No employees needed auto-checkout." };
+        }
     }
 };
 

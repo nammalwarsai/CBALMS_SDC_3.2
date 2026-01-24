@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Row, Col, Card, Button, Form, Table, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -106,6 +107,34 @@ const EmployeeDashboard = () => {
       ...leaveForm,
       [e.target.name]: e.target.value
     });
+  };
+
+  const generateAttendancePDF = () => {
+    const doc = new jsPDF();
+    doc.text(`${user ? user.name : 'Employee'} - Attendance Report`, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+
+    const tableColumn = ["Date", "Check In", "Check Out", "Status"];
+    const tableRows = [];
+
+    attendanceHistory.forEach(record => {
+      const rowData = [
+        record.date,
+        record.check_in || '-',
+        record.check_out || '-',
+        record.status
+      ];
+      tableRows.push(rowData);
+    });
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 30
+    });
+
+    doc.save(`Attendance_Report_${user ? user.name : 'Employee'}.pdf`);
   };
 
   return (
@@ -288,8 +317,13 @@ const EmployeeDashboard = () => {
       <Row>
         <Col>
           <Card className="content-card">
-            <Card.Header>
+
+
+            <Card.Header className="d-flex justify-content-between align-items-center">
               <strong>Attendance History</strong>
+              <Button variant="primary" size="sm" onClick={generateAttendancePDF}>
+                Download Report
+              </Button>
             </Card.Header>
             <Card.Body>
               <Table striped bordered hover responsive>
