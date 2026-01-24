@@ -44,6 +44,57 @@ const adminController = {
             console.error('Get Employee Details Error:', error);
             res.status(500).json({ error: 'Server error fetching employee details' });
         }
+    },
+
+    async getAttendanceReport(req, res) {
+        try {
+            const { type, date } = req.query; // type: 'daily' or 'monthly'
+
+            let startDate, endDate;
+            const today = new Date();
+
+            if (type === 'daily') {
+                // specific date or today
+                const targetDate = date || today.toISOString().split('T')[0];
+                startDate = targetDate;
+                endDate = targetDate;
+            } else if (type === 'monthly') {
+                // Last 30 days
+                const priorDate = new Date(new Date().setDate(today.getDate() - 30));
+                startDate = priorDate.toISOString().split('T')[0];
+                endDate = today.toISOString().split('T')[0];
+            } else {
+                return res.status(400).json({ error: 'Invalid report type' });
+            }
+
+            const report = await AttendanceModel.getAttendanceWithDetails(startDate, endDate);
+
+            if (type === 'daily') {
+                const allEmployees = await ProfileModel.getAllProfiles();
+                const attendanceMap = new Map(report.map(r => [r.employee_id, r]));
+
+                const fullReport = allEmployees.map(emp => {
+                    const att = attendanceMap.get(emp.id);
+                    return {
+                        full_name: emp.full_name,
+                        employee_id: emp.employee_id,
+                        department: emp.department,
+                        mobile_number: emp.mobile_number,
+                        attendance_status: att ? (att.check_out ? 'Present (Checked Out)' : 'Present') : 'Absent',
+                        check_in: att?.check_in || '-',
+                        check_out: att?.check_out || '-',
+                        date: startDate
+                    };
+                });
+                return res.status(200).json({ data: fullReport });
+            }
+
+            res.status(200).json({ data: report });
+
+        } catch (error) {
+            console.error('Get Report Error:', error);
+            res.status(500).json({ error: 'Server error generating report' });
+        }
     }
 };
 

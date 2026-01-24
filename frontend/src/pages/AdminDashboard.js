@@ -2,17 +2,10 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Row, Col, Card, Button, Table, Badge, Form, Modal, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import adminService from '../services/adminService';
-// Assuming attendanceService has a method to get all today's attendance or we use adminService for it?
-// The controller `attendanceController` didn't have `getAllToday` explicitly shown in my previous `view_file` (it had checkIn, checkOut, getHistory, getStatus).
-// I might need to add `getAllAttendance(date)` to backend or use `adminService` to fetch it if I added it there.
-// Checking adminRoutes.js: router.get('/employees', ...); router.get('/employees/:id', ...).
-// It seems I am missing an endpoint to get "Today's Attendance" for ALL employees.
-// I will check attendanceController again in my thought process... it didn't have it.
-// I'll add `getTodayAttendance` to attendanceController and route.
-// For now, I will comment out the fetching of today's attendance until I add the backend support or I'll just fetch employees and show their status if available.
-// actually I can filter employees who have attendance today if I fetch strict "today's attendance".
-// Let's implement Employee Table first as primarily requested.
+import attendanceService from '../services/attendanceService';
 
 const AdminDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -53,18 +46,103 @@ const AdminDashboard = () => {
       console.error("Error fetching employee details", error);
     }
   };
+  const downloadReport = async (type) => {
+    try {
+      const response = await adminService.getAttendanceReport(type);
+      const data = response.data;
+      const doc = new jsPDF();
+
+      const title = type === 'daily' ? `Daily Attendance Report - ${new Date().toLocaleDateString()}` : `Monthly Attendance Report - Last 30 Days`;
+      doc.text(title, 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+
+      // Define columns slightly differently based on type if needed, but standardizing helps
+      const tableColumn = ["Name", "ID", "Dept", "Status", "Check In", "Check Out", "Date"];
+      const tableRows = [];
+
+      data.forEach(record => {
+        let rowData;
+        if (type === 'daily') {
+          rowData = [
+            record.full_name,
+            record.employee_id,
+            record.department,
+            record.attendance_status,
+            record.check_in,
+            record.check_out,
+            record.date
+          ];
+        } else {
+          // Monthly
+          rowData = [
+            record.profiles?.full_name || 'N/A',
+            record.profiles?.employee_id || '-',
+            record.profiles?.department || '-',
+            record.status,
+            record.check_in || '-',
+            record.check_out || '-',
+            record.date
+          ];
+        }
+        tableRows.push(rowData);
+      });
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 30
+      });
+
+      doc.save(`Admin_Report_${type}_${new Date().toISOString().split('T')[0]}.pdf`);
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to download report");
+    }
+  };
+
+  const downloadEmployeeHistory = async () => {
+    if (!selectedEmployee) return;
+    try {
+      const res = await attendanceService.getHistory(selectedEmployee.id);
+      const history = res.data || [];
+
+      const doc = new jsPDF();
+      doc.text(`Attendance History - ${selectedEmployee.full_name}`, 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Employee ID: ${selectedEmployee.employee_id}`, 14, 22);
+
+      const tableColumn = ["Date", "Check In", "Check Out", "Status"];
+      const tableRows = history.map(r => [r.date, r.check_in || '-', r.check_out || '-', r.status]);
+
+      autoTable(doc, { head: [tableColumn], body: tableRows, startY: 30 });
+      doc.save(`${selectedEmployee.full_name}_Attendance.pdf`);
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to download employee history");
+    }
+  };
 
   return (
     <Container fluid className="mt-4 px-4">
       {/* Header */}
-      <div className="dashboard-header">
+      {/* Header */}
+      <div className="dashboard-header mb-4">
         <div className="d-flex justify-content-between align-items-center flex-wrap">
           <div>
             <h2>Admin Dashboard</h2>
             <p className="text-muted mb-0">Welcome, {user ? user.name : 'Admin'}! ({user?.email})</p>
           </div>
-          <div className="mt-3 mt-md-0">
-            <Button variant="info" className="me-2" onClick={() => navigate('/profile')}>
+          <div className="mt-3 mt-md-0 d-flex gap-2">
+            <Button variant="outline-primary" onClick={() => downloadReport('daily')}>
+              Download Today's Report
+            </Button>
+            <Button variant="outline-success" onClick={() => downloadReport('monthly')}>
+              Download Monthly Report
+            </Button>
+            <Button variant="info" className="ms-2" onClick={() => navigate('/profile')}>
               My Profile
             </Button>
             <Button variant="danger" onClick={handleLogout}>
@@ -240,6 +318,13 @@ const AdminDashboard = () => {
                       )}
                     </tbody>
                   </Table>
+                </Col>
+              </Row>
+              <Row className="mt-3">
+                <Col className="text-end">
+                  <Button variant="success" onClick={downloadEmployeeHistory}>
+                    Download Full Attendance History
+                  </Button>
                 </Col>
               </Row>
             </Container>

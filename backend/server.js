@@ -20,6 +20,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/attendance', require('./src/routes/attendanceRoutes'));
 app.use('/api/admin', require('./src/routes/adminRoutes'));
 
+// Initialize Cron Jobs
+const { initCronJobs } = require('./src/services/cronService');
+initCronJobs();
+
 // Test route
 app.get('/', (req, res) => {
   res.send(`Backend is running on port ${PORT}`);
