@@ -2,9 +2,10 @@ import React, { useContext, useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AuthContext } from '../context/AuthContext';
-import { Container, Row, Col, Card, Button, Form, Table, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Table, Badge, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import attendanceService from '../services/attendanceService';
+import leaveService from '../services/leaveService';
 
 const EmployeeDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -12,7 +13,10 @@ const EmployeeDashboard = () => {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [attendanceStatus, setAttendanceStatus] = useState('Not Checked In'); // 'Not Checked In', 'Checked In', 'Checked Out'
   const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [leaveHistory, setLeaveHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [leaveLoading, setLeaveLoading] = useState(false);
+  const [submittingLeave, setSubmittingLeave] = useState(false);
   const [leaveForm, setLeaveForm] = useState({
     leaveType: 'Sick',
     startDate: '',
@@ -24,6 +28,7 @@ const EmployeeDashboard = () => {
   useEffect(() => {
     if (user?.id) {
       fetchAttendanceData();
+      fetchLeaveHistory();
     }
   }, [user]);
 
@@ -44,8 +49,17 @@ const EmployeeDashboard = () => {
     }
   };
 
-  // Mock data for leave history (Task only mentioned removing dummy data for attendance? Or all? "remove all the dummy data in the .../employee-dashboard". I should handle leave history too but I don't have backend for leaves yet. I will keep mock leave for now or clear it to empty array if instructed STRICTLY "remove all dummy data". The request says "remove all the dummy data". I'll clear it.)
-  const leaveHistory = [];
+  const fetchLeaveHistory = async () => {
+    try {
+      setLeaveLoading(true);
+      const response = await leaveService.getMyLeaves();
+      setLeaveHistory(response.data || []);
+    } catch (error) {
+      console.error("Error fetching leave history", error);
+    } finally {
+      setLeaveLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -72,34 +86,54 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const handleLeaveSubmit = (e) => {
+  const handleLeaveSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate dates
+    if (new Date(leaveForm.endDate) < new Date(leaveForm.startDate)) {
+      alert('End date must be after or equal to start date');
+      return;
+    }
 
-    // Generate PDF
-    const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.text("Leave Request Application", 20, 20);
+    try {
+      setSubmittingLeave(true);
+      await leaveService.applyLeave({
+        leaveType: leaveForm.leaveType,
+        startDate: leaveForm.startDate,
+        endDate: leaveForm.endDate,
+        reason: leaveForm.reason
+      });
 
-    doc.setFontSize(12);
-    doc.text(`Employee Name: ${user ? user.name : 'N/A'}`, 20, 40);
-    doc.text(`Employee ID: ${user ? user.employeeId : 'N/A'}`, 20, 50);
-    doc.text(`Department: ${user ? user.department : 'N/A'}`, 20, 60);
+      alert('Leave application submitted successfully!');
+      setLeaveForm({
+        leaveType: 'Sick',
+        startDate: '',
+        endDate: '',
+        reason: ''
+      });
+      
+      // Refresh leave history
+      fetchLeaveHistory();
+    } catch (error) {
+      console.error('Leave application error:', error);
+      alert(error.response?.data?.error || 'Failed to submit leave application');
+    } finally {
+      setSubmittingLeave(false);
+    }
+  };
 
-    doc.text(`Leave Type: ${leaveForm.leaveType}`, 20, 80);
-    doc.text(`Start Date: ${leaveForm.startDate}`, 20, 90);
-    doc.text(`End Date: ${leaveForm.endDate}`, 20, 100);
-    doc.text(`Reason:`, 20, 120);
-    doc.text(leaveForm.reason, 20, 130);
+  const handleCancelLeave = async (leaveId) => {
+    if (!window.confirm('Are you sure you want to cancel this leave request?')) {
+      return;
+    }
 
-    doc.save(`leave_request_${leaveForm.startDate}.pdf`);
-
-    alert('Leave application submitted successfully! PDF downloaded.');
-    setLeaveForm({
-      leaveType: 'Sick',
-      startDate: '',
-      endDate: '',
-      reason: ''
-    });
+    try {
+      await leaveService.cancelLeave(leaveId);
+      alert('Leave request cancelled successfully');
+      fetchLeaveHistory();
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to cancel leave request');
+    }
   };
 
   const handleLeaveChange = (e) => {
@@ -266,8 +300,15 @@ const EmployeeDashboard = () => {
                     placeholder="Please provide a reason for your leave"
                   />
                 </Form.Group>
-                <Button type="submit" variant="primary" className="w-100">
-                  Submit Leave Request
+                <Button type="submit" variant="primary" className="w-100" disabled={submittingLeave}>
+                  {submittingLeave ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Leave Request'
+                  )}
                 </Button>
               </Form>
             </Card.Body>
@@ -280,34 +321,60 @@ const EmployeeDashboard = () => {
               <strong>Leave History</strong>
             </Card.Header>
             <Card.Body>
-              <Table striped bordered hover responsive>
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaveHistory.length === 0 ? (
-                    <tr><td colSpan="4" className="text-center text-muted">No leave history found</td></tr>
-                  ) : (
-                    leaveHistory.map((leave, index) => (
-                      <tr key={index}>
-                        <td>{leave.type}</td>
-                        <td>{leave.startDate}</td>
-                        <td>{leave.endDate}</td>
-                        <td>
-                          <Badge bg={leave.status === 'Approved' ? 'success' : 'warning'}>
-                            {leave.status}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </Table>
+              {leaveLoading ? (
+                <div className="text-center py-3">
+                  <Spinner animation="border" size="sm" />
+                </div>
+              ) : (
+                <Table striped bordered hover responsive>
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaveHistory.length === 0 ? (
+                      <tr><td colSpan="5" className="text-center text-muted">No leave history found</td></tr>
+                    ) : (
+                      leaveHistory.map((leave) => (
+                        <tr key={leave.id}>
+                          <td>{leave.leave_type}</td>
+                          <td>{leave.start_date}</td>
+                          <td>{leave.end_date}</td>
+                          <td>
+                            <Badge bg={
+                              leave.status === 'Approved' ? 'success' : 
+                              leave.status === 'Rejected' ? 'danger' : 'warning'
+                            }>
+                              {leave.status}
+                            </Badge>
+                          </td>
+                          <td>
+                            {leave.status === 'Pending' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline-danger"
+                                onClick={() => handleCancelLeave(leave.id)}
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                            {leave.status !== 'Pending' && (
+                              <span className="text-muted small">
+                                {leave.admin_remarks || '-'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </Table>
+              )}
             </Card.Body>
           </Card>
         </Col>

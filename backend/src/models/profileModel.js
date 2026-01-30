@@ -1,53 +1,80 @@
 const supabase = require('../config/supabaseClient');
 
+// Helper function for retry logic
+const withRetry = async (fn, retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (i === retries - 1) throw error;
+            if (error.message?.includes('timeout') || error.message?.includes('fetch failed')) {
+                console.log(`Retry ${i + 1}/${retries} after connection error...`);
+                await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+            } else {
+                throw error;
+            }
+        }
+    }
+};
+
 const ProfileModel = {
     async getProfileById(id) {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', id)
-            .single();
-        if (error) throw error;
-        return data;
+        return withRetry(async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (error) throw error;
+            return data;
+        });
     },
 
     async updateProfile(id, updates) {
-        const { data, error } = await supabase
-            .from('profiles')
-            .update(updates)
-            .eq('id', id)
-            .select()
-            .single();
-        if (error) throw error;
-        return data;
+        return withRetry(async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        });
     },
 
     async checkAdminExists() {
-        const { count, error } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true })
-            .eq('role', 'admin');
+        return withRetry(async () => {
+            const { count, error } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('role', 'admin');
 
-        if (error) throw error;
-        return count > 0;
+            if (error) throw error;
+            return count > 0;
+        });
     },
 
     async createProfile(profileData) {
-        const { data, error } = await supabase
-            .from('profiles')
-            .insert([profileData])
-            .select()
-            .single();
-        if (error) throw error;
-        return data;
+        return withRetry(async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .insert([profileData])
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        });
     },
 
     async getAllProfiles() {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*');
-        if (error) throw error;
-        return data;
+        return withRetry(async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*');
+            if (error) throw error;
+            return data;
+        });
     }
 };
 

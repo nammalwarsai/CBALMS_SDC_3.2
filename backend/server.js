@@ -19,6 +19,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/attendance', require('./src/routes/attendanceRoutes'));
 app.use('/api/admin', require('./src/routes/adminRoutes'));
+app.use('/api/leaves', require('./src/routes/leaveRoutes'));
 
 // Initialize Cron Jobs
 const { initCronJobs } = require('./src/services/cronService');

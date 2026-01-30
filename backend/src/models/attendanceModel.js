@@ -58,6 +58,17 @@ const AttendanceModel = {
         return data;
     },
 
+    // Get today's attendance records
+    async getTodayAttendance(date) {
+        const { data, error } = await supabase
+            .from('attendance')
+            .select('*')
+            .eq('date', date);
+
+        if (error) throw error;
+        return data || [];
+    },
+
     // Helper to update the profile's present_status_of_employee
     async updateProfileStatus(userId, status) {
         const { data, error } = await supabase

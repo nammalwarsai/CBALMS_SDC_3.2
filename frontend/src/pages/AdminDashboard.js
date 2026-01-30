@@ -6,6 +6,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import adminService from '../services/adminService';
 import attendanceService from '../services/attendanceService';
+import leaveService from '../services/leaveService';
 
 const AdminDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -14,12 +15,47 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [leaveRequests, setLeaveRequests] = useState([]); // Keep empty for now as backend missing
-  const [attendanceData, setAttendanceData] = useState([]); // Keep empty until backend API added
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [pendingLeaves, setPendingLeaves] = useState([]);
+  const [todayLeaves, setTodayLeaves] = useState([]);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState({
+    totalEmployees: 0,
+    presentToday: 0,
+    absentToday: 0,
+    onLeave: 0
+  });
+  const [showAttendanceListModal, setShowAttendanceListModal] = useState(false);
+  const [attendanceListType, setAttendanceListType] = useState('');
+  const [attendanceListData, setAttendanceListData] = useState([]);
+  
+  // Leave management states
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showTodayLeavesModal, setShowTodayLeavesModal] = useState(false);
+  const [selectedLeave, setSelectedLeave] = useState(null);
+  const [leaveRemarks, setLeaveRemarks] = useState('');
+  const [processingLeave, setProcessingLeave] = useState(false);
+  const [leaveFilter, setLeaveFilter] = useState('Pending');
 
   useEffect(() => {
     fetchEmployees();
+    fetchDashboardStats();
+    fetchPendingLeaves();
   }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const data = await adminService.getDashboardStats();
+      setDashboardStats(data.data || {
+        totalEmployees: 0,
+        presentToday: 0,
+        absentToday: 0,
+        onLeave: 0
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard stats", error);
+    }
+  };
 
   const fetchEmployees = async () => {
     try {
@@ -29,6 +65,45 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error fetching employees", error);
       setLoading(false);
+    }
+  };
+
+  const fetchPendingLeaves = async () => {
+    try {
+      const response = await leaveService.getAllLeaves('Pending');
+      setPendingLeaves(response.data || []);
+    } catch (error) {
+      console.error("Error fetching pending leaves", error);
+    }
+  };
+
+  const fetchAllLeaves = async (status = null) => {
+    try {
+      const response = await leaveService.getAllLeaves(status);
+      setLeaveRequests(response.data || []);
+    } catch (error) {
+      console.error("Error fetching leaves", error);
+    }
+  };
+
+  const fetchTodayLeaves = async () => {
+    try {
+      const response = await leaveService.getTodayLeaves();
+      setTodayLeaves(response.data || []);
+    } catch (error) {
+      console.error("Error fetching today's leaves", error);
+    }
+  };
+
+  const handleStatCardClick = async (type) => {
+    try {
+      const response = await adminService.getAttendanceList(type);
+      setAttendanceListData(response.data || []);
+      setAttendanceListType(type);
+      setShowAttendanceListModal(true);
+    } catch (error) {
+      console.error(`Error fetching ${type} employees`, error);
+      alert(`Failed to fetch ${type} employees`);
     }
   };
 
@@ -125,6 +200,54 @@ const AdminDashboard = () => {
     }
   };
 
+  // Leave management handlers
+  const handleOpenLeaveModal = async () => {
+    await fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter);
+    setShowLeaveModal(true);
+  };
+
+  const handleOpenTodayLeavesModal = async () => {
+    await fetchTodayLeaves();
+    setShowTodayLeavesModal(true);
+  };
+
+  const handleLeaveFilterChange = async (filter) => {
+    setLeaveFilter(filter);
+    await fetchAllLeaves(filter === 'All' ? null : filter);
+  };
+
+  const handleApproveLeave = async (leaveId) => {
+    try {
+      setProcessingLeave(true);
+      await leaveService.approveLeave(leaveId, leaveRemarks);
+      alert('Leave approved successfully!');
+      setLeaveRemarks('');
+      await fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter);
+      await fetchPendingLeaves();
+      await fetchDashboardStats();
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to approve leave');
+    } finally {
+      setProcessingLeave(false);
+    }
+  };
+
+  const handleRejectLeave = async (leaveId) => {
+    try {
+      setProcessingLeave(true);
+      await leaveService.rejectLeave(leaveId, leaveRemarks);
+      alert('Leave rejected successfully!');
+      setLeaveRemarks('');
+      await fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter);
+      await fetchPendingLeaves();
+      await fetchDashboardStats();
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to reject leave');
+    } finally {
+      setProcessingLeave(false);
+    }
+  };
+
   return (
     <Container fluid className="mt-4 px-4">
       {/* Header */}
@@ -135,7 +258,13 @@ const AdminDashboard = () => {
             <h2>Admin Dashboard</h2>
             <p className="text-muted mb-0">Welcome, {user ? user.name : 'Admin'}! ({user?.email})</p>
           </div>
-          <div className="mt-3 mt-md-0 d-flex gap-2">
+          <div className="mt-3 mt-md-0 d-flex gap-2 flex-wrap">
+            <Button variant="warning" onClick={handleOpenTodayLeavesModal}>
+              📅 Today's Leaves ({dashboardStats.onLeave})
+            </Button>
+            <Button variant="primary" onClick={handleOpenLeaveModal}>
+              📋 Leave Requests {pendingLeaves.length > 0 && <Badge bg="danger" className="ms-1">{pendingLeaves.length}</Badge>}
+            </Button>
             <Button variant="outline-primary" onClick={() => downloadReport('daily')}>
               Download Today's Report
             </Button>
@@ -157,32 +286,47 @@ const AdminDashboard = () => {
         <Col md={6} lg={3} className="mb-3">
           <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)', color: 'white' }}>
             <Card.Body>
-              <h3>{employees.length}</h3>
+              <h3>{dashboardStats.totalEmployees}</h3>
               <Card.Text>Total Employees</Card.Text>
             </Card.Body>
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white' }}>
+          <Card 
+            className="stat-card text-center" 
+            style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', cursor: 'pointer' }}
+            onClick={() => handleStatCardClick('present')}
+          >
             <Card.Body>
-              <h3>--</h3>
+              <h3>{dashboardStats.presentToday}</h3>
               <Card.Text>Present Today</Card.Text>
+              <small style={{ opacity: 0.8 }}>Click to view list</small>
             </Card.Body>
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
+          <Card 
+            className="stat-card text-center" 
+            style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white', cursor: 'pointer' }}
+            onClick={handleOpenTodayLeavesModal}
+          >
             <Card.Body>
-              <h3>--</h3>
+              <h3>{dashboardStats.onLeave}</h3>
               <Card.Text>On Leave</Card.Text>
+              <small style={{ opacity: 0.8 }}>Click to view list</small>
             </Card.Body>
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', color: 'white' }}>
+          <Card 
+            className="stat-card text-center" 
+            style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', color: 'white', cursor: 'pointer' }}
+            onClick={() => handleStatCardClick('absent')}
+          >
             <Card.Body>
-              <h3>--</h3>
+              <h3>{dashboardStats.absentToday}</h3>
               <Card.Text>Absent Today</Card.Text>
+              <small style={{ opacity: 0.8 }}>Click to view list</small>
             </Card.Body>
           </Card>
         </Col>
@@ -332,6 +476,241 @@ const AdminDashboard = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Present/Absent Employees List Modal */}
+      <Modal show={showAttendanceListModal} onHide={() => setShowAttendanceListModal(false)} size="lg">
+        <Modal.Header closeButton style={{ 
+          background: attendanceListType === 'present' 
+            ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' 
+            : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', 
+          color: 'white' 
+        }}>
+          <Modal.Title>
+            {attendanceListType === 'present' ? '✓ Present Today' : '✗ Absent Today'} ({attendanceListData.length})
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {attendanceListData.length === 0 ? (
+            <div className="text-center py-5">
+              <p className="text-muted">
+                {attendanceListType === 'present' 
+                  ? 'No employees have checked in today yet.' 
+                  : 'All employees are present today!'}
+              </p>
+            </div>
+          ) : (
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Employee ID</th>
+                  <th>Department</th>
+                  <th>Mobile</th>
+                  {attendanceListType === 'present' && <th>Check In Time</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {attendanceListData.map((emp, index) => (
+                  <tr key={emp.id || index}>
+                    <td>{index + 1}</td>
+                    <td><strong>{emp.full_name}</strong></td>
+                    <td>{emp.employee_id}</td>
+                    <td>{emp.department}</td>
+                    <td>{emp.mobile_number}</td>
+                    {attendanceListType === 'present' && <td><Badge bg="success">{emp.check_in || '-'}</Badge></td>}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAttendanceListModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Leave Requests Management Modal */}
+      <Modal show={showLeaveModal} onHide={() => setShowLeaveModal(false)} size="xl">
+        <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: 'white' }}>
+          <Modal.Title>📋 Leave Requests Management</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3 d-flex gap-2">
+            <Button 
+              variant={leaveFilter === 'Pending' ? 'warning' : 'outline-warning'}
+              onClick={() => handleLeaveFilterChange('Pending')}
+            >
+              Pending
+            </Button>
+            <Button 
+              variant={leaveFilter === 'Approved' ? 'success' : 'outline-success'}
+              onClick={() => handleLeaveFilterChange('Approved')}
+            >
+              Approved
+            </Button>
+            <Button 
+              variant={leaveFilter === 'Rejected' ? 'danger' : 'outline-danger'}
+              onClick={() => handleLeaveFilterChange('Rejected')}
+            >
+              Rejected
+            </Button>
+            <Button 
+              variant={leaveFilter === 'All' ? 'primary' : 'outline-primary'}
+              onClick={() => handleLeaveFilterChange('All')}
+            >
+              All
+            </Button>
+          </div>
+
+          {leaveRequests.length === 0 ? (
+            <div className="text-center py-5">
+              <p className="text-muted">No {leaveFilter !== 'All' ? leaveFilter.toLowerCase() : ''} leave requests found.</p>
+            </div>
+          ) : (
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th>Type</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaveRequests.map((leave, index) => (
+                  <tr key={leave.id}>
+                    <td>{index + 1}</td>
+                    <td>
+                      <strong>{leave.profiles?.full_name || 'N/A'}</strong>
+                      <br />
+                      <small className="text-muted">{leave.profiles?.employee_id}</small>
+                    </td>
+                    <td>{leave.profiles?.department || '-'}</td>
+                    <td><Badge bg="info">{leave.leave_type}</Badge></td>
+                    <td>{leave.start_date}</td>
+                    <td>{leave.end_date}</td>
+                    <td style={{ maxWidth: '200px' }}>
+                      <small>{leave.reason || '-'}</small>
+                    </td>
+                    <td>
+                      <Badge bg={
+                        leave.status === 'Approved' ? 'success' : 
+                        leave.status === 'Rejected' ? 'danger' : 'warning'
+                      }>
+                        {leave.status}
+                      </Badge>
+                    </td>
+                    <td>
+                      {leave.status === 'Pending' ? (
+                        <div className="d-flex flex-column gap-1">
+                          <div className="d-flex gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="success"
+                              disabled={processingLeave}
+                              onClick={() => handleApproveLeave(leave.id)}
+                            >
+                              ✓ Approve
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="danger"
+                              disabled={processingLeave}
+                              onClick={() => handleRejectLeave(leave.id)}
+                            >
+                              ✗ Reject
+                            </Button>
+                          </div>
+                          <Form.Control
+                            size="sm"
+                            type="text"
+                            placeholder="Remarks (optional)"
+                            value={selectedLeave === leave.id ? leaveRemarks : ''}
+                            onChange={(e) => {
+                              setSelectedLeave(leave.id);
+                              setLeaveRemarks(e.target.value);
+                            }}
+                            onFocus={() => setSelectedLeave(leave.id)}
+                          />
+                        </div>
+                      ) : (
+                        <small className="text-muted">
+                          {leave.admin_remarks || 'No remarks'}
+                        </small>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowLeaveModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Today's Leaves Modal */}
+      <Modal show={showTodayLeavesModal} onHide={() => setShowTodayLeavesModal(false)} size="lg">
+        <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
+          <Modal.Title>📅 Today's Leaves ({todayLeaves.length})</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {todayLeaves.length === 0 ? (
+            <div className="text-center py-5">
+              <p className="text-muted">No employees are on leave today.</p>
+            </div>
+          ) : (
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th>Leave Type</th>
+                  <th>Period</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {todayLeaves.map((leave, index) => (
+                  <tr key={leave.id}>
+                    <td>{index + 1}</td>
+                    <td>
+                      <strong>{leave.profiles?.full_name || 'N/A'}</strong>
+                      <br />
+                      <small className="text-muted">{leave.profiles?.employee_id}</small>
+                    </td>
+                    <td>{leave.profiles?.department || '-'}</td>
+                    <td><Badge bg="warning" text="dark">{leave.leave_type}</Badge></td>
+                    <td>
+                      {leave.start_date} to {leave.end_date}
+                    </td>
+                    <td style={{ maxWidth: '250px' }}>
+                      <small>{leave.reason || '-'}</small>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowTodayLeavesModal(false)}>
             Close
           </Button>
         </Modal.Footer>

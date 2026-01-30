@@ -50,3 +50,29 @@ CREATE POLICY "Users can insert own attendance" ON attendance
 
 CREATE POLICY "Users can update own attendance" ON attendance
   FOR UPDATE USING (auth.uid() = employee_id);
+
+-- Create leaves table for leave management
+CREATE TABLE leaves (
+  id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+  employee_id uuid REFERENCES profiles(id) NOT NULL,
+  leave_type text NOT NULL, -- 'Sick', 'Casual', 'Earned'
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  reason text,
+  status text DEFAULT 'Pending', -- 'Pending', 'Approved', 'Rejected'
+  admin_remarks text,
+  reviewed_by uuid REFERENCES profiles(id),
+  reviewed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RLS for leaves
+ALTER TABLE leaves ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own leaves" ON leaves
+  FOR SELECT USING (auth.uid() = employee_id);
+
+CREATE POLICY "Users can insert own leaves" ON leaves
+  FOR INSERT WITH CHECK (auth.uid() = employee_id);
+
+-- Note: Admins will use service role to update leaves (approve/reject)

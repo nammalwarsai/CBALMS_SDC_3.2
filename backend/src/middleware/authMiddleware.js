@@ -1,6 +1,6 @@
 const supabase = require('../config/supabaseClient');
 
-const authMiddleware = async (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader) {
@@ -18,7 +18,19 @@ const authMiddleware = async (req, res, next) => {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
-        req.user = user;
+        // Get user profile to include role
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (!profileError && profile) {
+            req.user = { ...user, ...profile };
+        } else {
+            req.user = user;
+        }
+        
         next();
     } catch (error) {
         console.error('Auth Middleware Error:', error);
@@ -26,4 +38,18 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
+// Middleware to check if user is admin
+const isAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+    }
+};
+
+// Keep backward compatibility with default export
+const authMiddleware = authenticateToken;
+
 module.exports = authMiddleware;
+module.exports.authenticateToken = authenticateToken;
+module.exports.isAdmin = isAdmin;

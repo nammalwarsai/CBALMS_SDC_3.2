@@ -1,6 +1,16 @@
 import api from './api';
 
 const adminService = {
+    getDashboardStats: async () => {
+        const response = await api.get('/admin/stats');
+        return response.data;
+    },
+
+    getAttendanceList: async (type) => {
+        const response = await api.get('/admin/attendance-list', { params: { type } });
+        return response.data;
+    },
+
     getAllEmployees: async () => {
         const response = await api.get('/admin/employees');
         return response.data;
