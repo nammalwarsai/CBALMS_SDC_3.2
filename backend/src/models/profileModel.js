@@ -24,7 +24,7 @@ const ProfileModel = {
                 .from('profiles')
                 .select('*')
                 .eq('id', id)
-                .single();
+                .maybeSingle();
             if (error) throw error;
             return data;
         });
@@ -43,15 +43,27 @@ const ProfileModel = {
         });
     },
 
-    async checkAdminExists() {
+    // Optimized count of all profiles
+    async getProfileCount() {
         return withRetry(async () => {
             const { count, error } = await supabase
                 .from('profiles')
-                .select('*', { count: 'exact', head: true })
-                .eq('role', 'admin');
+                .select('*', { count: 'exact', head: true });
 
             if (error) throw error;
-            return count > 0;
+            return count || 0;
+        });
+    },
+
+    // Get basic profile info only (lighter payload)
+    async getBasicProfiles() {
+        return withRetry(async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, employee_id, department, mobile_number, role, email'); // Exclude profile_photo
+
+            if (error) throw error;
+            return data;
         });
     },
 

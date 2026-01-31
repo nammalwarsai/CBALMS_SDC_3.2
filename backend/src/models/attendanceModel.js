@@ -93,6 +93,23 @@ const AttendanceModel = {
         return data;
     },
 
+    // Get count of present employees for a specific date
+    async getPresentCount(date) {
+        // We select distinct employee_ids for the given date
+        // Since Supabase .count() with head:true doesn't support distinct easily on the client side without RPC
+        // We will fetch just the employee_ids and count unique ones.
+        // Or better yet, rely on the fact that an employee can only check in once per day (as per rules),
+        // so we can just count the rows.
+
+        const { count, error } = await supabase
+            .from('attendance')
+            .select('*', { count: 'exact', head: true })
+            .eq('date', date);
+
+        if (error) throw error;
+        return count || 0;
+    },
+
     // Auto-checkout logic
     async processAutoCheckout() {
         const today = new Date().toISOString().split('T')[0];
@@ -119,7 +136,7 @@ const AttendanceModel = {
             // Check if record needs auto-checkout
             // Condition: Date is BEFORE today OR (Date is TODAY AND Current Time > 18:00)
             const recordDate = record.date;
-            
+
             let shouldCheckout = false;
 
             if (recordDate < today) {
@@ -138,7 +155,7 @@ const AttendanceModel = {
                 // Update Attendance Record
                 const updateAttendance = supabase
                     .from('attendance')
-                    .update({ 
+                    .update({
                         check_out: checkoutTime,
                         status: 'Present' // explicit, though likely already Present
                     })

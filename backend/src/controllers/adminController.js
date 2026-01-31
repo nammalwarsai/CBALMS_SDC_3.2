@@ -7,26 +7,20 @@ const adminController = {
     async getDashboardStats(req, res) {
         try {
             const today = new Date().toISOString().split('T')[0];
-            
-            // Get all employees
-            const allEmployees = await ProfileModel.getAllProfiles();
-            const totalEmployees = allEmployees.length;
-            
-            // Get today's attendance records
-            const todayAttendance = await AttendanceModel.getTodayAttendance(today);
-            
-            // Create a set of employee IDs who have checked in today
-            const presentEmployeeIds = new Set(todayAttendance.map(att => att.employee_id));
-            
+
+            // Get total employees count using optimized query
+            const totalEmployees = await ProfileModel.getProfileCount();
+
+            // Get present count efficiently
+            const presentCount = await AttendanceModel.getPresentCount(today);
+
             // Get approved leaves for today
             const onLeaveCount = await LeaveModel.getApprovedLeavesCountForDate(today);
-            
-            // Count present employees (those who checked in today)
-            const presentCount = presentEmployeeIds.size;
-            
-            // Count absent employees (total - present - on leave)
+
+            // Calculate absent employees (total - present - on leave)
+            // Note: This is an estimation if numbers drift, but much faster.
             const absentCount = Math.max(0, totalEmployees - presentCount - onLeaveCount);
-            
+
             res.status(200).json({
                 data: {
                     totalEmployees,
@@ -46,18 +40,18 @@ const adminController = {
         try {
             const { type } = req.query; // 'present' or 'absent'
             const today = new Date().toISOString().split('T')[0];
-            
-            // Get all employees
-            const allEmployees = await ProfileModel.getAllProfiles();
-            
+
+            // Get all employees with basic info (lighter payload)
+            const allEmployees = await ProfileModel.getBasicProfiles();
+
             // Get today's attendance records
             const todayAttendance = await AttendanceModel.getTodayAttendance(today);
-            
+
             // Create a map of employee IDs to their attendance record
             const attendanceMap = new Map(todayAttendance.map(att => [att.employee_id, att]));
-            
+
             let resultList = [];
-            
+
             if (type === 'present') {
                 // Return employees who have checked in today
                 resultList = allEmployees
@@ -73,7 +67,7 @@ const adminController = {
             } else {
                 return res.status(400).json({ error: 'Invalid type. Use "present" or "absent"' });
             }
-            
+
             res.status(200).json({ data: resultList });
         } catch (error) {
             console.error('Get Attendance List Error:', error);
@@ -83,7 +77,7 @@ const adminController = {
 
     async getAllEmployees(req, res) {
         try {
-            const employees = await ProfileModel.getAllProfiles();
+            const employees = await ProfileModel.getBasicProfiles();
             // Filter out admins if necessary, or just return all
             // const nonAdmins = employees.filter(emp => emp.role !== 'admin');
             res.status(200).json({ data: employees });

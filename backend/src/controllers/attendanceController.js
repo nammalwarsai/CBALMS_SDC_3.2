@@ -8,11 +8,23 @@ const attendanceController = {
             const now = new Date();
             const timeString = now.toLocaleTimeString('en-US', { hour12: true }); // e.g., "09:00 AM"
 
+            // 0. Check for Weekend restriction (Sat/Sun)
+            const dayOfWeek = now.getDay();
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                return res.status(400).json({ error: 'Cannot check in on weekends (Saturday/Sunday).' });
+            }
+
             // 1. Check if already checked in today
             const existingRecord = await AttendanceModel.getAttendanceByDate(userId, today);
 
             if (existingRecord) {
                 return res.status(400).json({ error: 'Already checked in for today' });
+            }
+
+            // 1.5 Check if user is on approved leave
+            const onLeave = await require('../models/leaveModel').isUserOnLeave(userId, today);
+            if (onLeave) {
+                return res.status(400).json({ error: 'It is your leave period. You cannot check in.' });
             }
 
             // 2. Create Attendance Record

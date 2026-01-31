@@ -274,6 +274,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -284,6 +285,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -327,12 +329,82 @@
   .auth-card .card-body {
     padding: 2rem;
   }
-  
+
   .dashboard-header {
     padding: 1.5rem;
   }
-  
+
   .stat-card h3 {
     font-size: 2rem;
   }
+}
+
+/* Calendar Styles */
+.react-calendar {
+  width: 100% !important;
+  border: none !important;
+  font-family: inherit !important;
+  line-height: inherit !important;
+}
+
+.calendar-container {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Base Tile Style */
+.react-calendar__tile {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px !important;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background-color: #e6e6e6;
+}
+
+/* Status Styles */
+.calendar-present {
+  background-color: #D1FAE5 !important;
+  /* Green-100 */
+  color: #065F46 !important;
+  border: 1px solid #10B981 !important;
+}
+
+.calendar-leave {
+  background-color: #DBEAFE !important;
+  /* Blue-100 */
+  color: #1E40AF !important;
+  border: 1px solid #3B82F6 !important;
+}
+
+.calendar-absent {
+  background-color: #FEE2E2 !important;
+  /* Red-100 */
+  color: #991B1B !important;
+  border: 1px solid #EF4444 !important;
+}
+
+.calendar-present:hover {
+  background-color: #A7F3D0 !important;
+}
+
+.calendar-leave:hover {
+  background-color: #BFDBFE !important;
+}
+
+.calendar-absent:hover {
+  background-color: #FECACA !important;
+}
+
+/* Weekend highlighting (optional) */
+.react-calendar__month-view__days__day--weekend {
+  color: #EF4444;
 }

@@ -21,18 +21,8 @@ const authController = {
         try {
             const { email, password, fullName, role, department, mobileNumber, employeeId, profilePhoto } = req.body;
 
-            // 0. Check for Single Admin Policy
-            if (role === 'admin') {
-                try {
-                    const adminExists = await ProfileModel.checkAdminExists();
-                    if (adminExists) {
-                        return res.status(400).json({ error: 'An Admin account already exists. Only one Admin is allowed.' });
-                    }
-                } catch (err) {
-                    console.error('Error checking admin existence:', err);
-                    return res.status(500).json({ error: 'Server error checking admin status' });
-                }
-            }
+            // 0. Check for Single Admin Policy - REMOVED to allow multiple admins
+            // if (role === 'admin') { ... }
 
             // 1. Create Auth User
             const { data: authData, error: authError } = await AuthModel.signUp(email, password);
@@ -101,6 +91,16 @@ const authController = {
                     console.error('Error fetching profile', err);
                 }
             }
+
+            // WEEKEND RESTRICTION - REMOVED per user feedback. Employees CAN login, but cannot check-in.
+            /*
+            if (profile && profile.role !== 'admin') {
+                const dayOfWeek = new Date().getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    return res.status(403).json({ error: 'Employees cannot log in on weekends (Saturday/Sunday).' });
+                }
+            }
+            */
 
             const normalizedUser = normalizeUser(data.user, profile);
 

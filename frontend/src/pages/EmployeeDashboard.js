@@ -6,6 +6,7 @@ import { Container, Row, Col, Card, Button, Form, Table, Badge, Spinner } from '
 import { useNavigate } from 'react-router-dom';
 import attendanceService from '../services/attendanceService';
 import leaveService from '../services/leaveService';
+import CalendarComponent from '../components/CalendarComponent';
 
 const EmployeeDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -88,7 +89,7 @@ const EmployeeDashboard = () => {
 
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate dates
     if (new Date(leaveForm.endDate) < new Date(leaveForm.startDate)) {
       alert('End date must be after or equal to start date');
@@ -111,7 +112,7 @@ const EmployeeDashboard = () => {
         endDate: '',
         reason: ''
       });
-      
+
       // Refresh leave history
       fetchLeaveHistory();
     } catch (error) {
@@ -197,19 +198,70 @@ const EmployeeDashboard = () => {
           <Card className="stat-card text-center">
             <Card.Body>
               <Card.Title className="mb-3">Check In/Out</Card.Title>
-              {attendanceStatus === 'Checked In' ? (
-                <Button variant="warning" size="lg" onClick={handleCheckOut}>
-                  Check Out
-                </Button>
-              ) : attendanceStatus === 'Not Checked In' ? (
-                <Button variant="success" size="lg" onClick={handleCheckIn}>
-                  Check In
-                </Button>
-              ) : (
-                <Button variant="secondary" size="lg" disabled>
-                  Checked Out
-                </Button>
-              )}
+              {(() => {
+                // Check if today is a leave day
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const todayStr = `${year}-${month}-${day}`;
+
+                // Weekend Check
+                const todayDate = new Date();
+                const dayOfWeek = todayDate.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                  return (
+                    <div className="d-flex flex-column align-items-center">
+                      <Button variant="secondary" size="lg" disabled>
+                        Weekend
+                      </Button>
+                      <small className="text-danger mt-2 fw-bold">
+                        Check-in disabled on weekends.
+                      </small>
+                    </div>
+                  );
+                }
+
+                const isOnLeave = leaveHistory.some(l => {
+                  const start = new Date(l.start_date);
+                  const end = new Date(l.end_date);
+                  const current = new Date(todayStr);
+                  return current >= start && current <= end && l.status === 'Approved';
+                });
+
+                if (isOnLeave) {
+                  return (
+                    <div className="d-flex flex-column align-items-center">
+                      <Button variant="secondary" size="lg" disabled>
+                        Leave Period
+                      </Button>
+                      <small className="text-danger mt-2 fw-bold">
+                        You cannot check in during leave.
+                      </small>
+                    </div>
+                  );
+                }
+
+                if (attendanceStatus === 'Checked In') {
+                  return (
+                    <Button variant="warning" size="lg" onClick={handleCheckOut}>
+                      Check Out
+                    </Button>
+                  );
+                } else if (attendanceStatus === 'Not Checked In') {
+                  return (
+                    <Button variant="success" size="lg" onClick={handleCheckIn}>
+                      Check In
+                    </Button>
+                  );
+                } else {
+                  return (
+                    <Button variant="secondary" size="lg" disabled>
+                      Checked Out
+                    </Button>
+                  );
+                }
+              })()}
               <p className="mt-3 mb-0">
                 <Badge bg={
                   attendanceStatus === 'Checked In' ? 'success' :
@@ -347,16 +399,16 @@ const EmployeeDashboard = () => {
                           <td>{leave.end_date}</td>
                           <td>
                             <Badge bg={
-                              leave.status === 'Approved' ? 'success' : 
-                              leave.status === 'Rejected' ? 'danger' : 'warning'
+                              leave.status === 'Approved' ? 'success' :
+                                leave.status === 'Rejected' ? 'danger' : 'warning'
                             }>
                               {leave.status}
                             </Badge>
                           </td>
                           <td>
                             {leave.status === 'Pending' && (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline-danger"
                                 onClick={() => handleCancelLeave(leave.id)}
                               >
@@ -379,6 +431,17 @@ const EmployeeDashboard = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Calendar Section - START */}
+      <Row className="mb-4">
+        <Col>
+          <CalendarComponent
+            attendanceHistory={attendanceHistory}
+            leaveHistory={leaveHistory}
+          />
+        </Col>
+      </Row>
+      {/* Calendar Section - END */}
 
       {/* Attendance History */}
       <Row>

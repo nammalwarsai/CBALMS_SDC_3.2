@@ -41,25 +41,25 @@ const LeaveModel = {
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        
+
         // Get unique employee IDs
         const employeeIds = [...new Set(leaves.map(l => l.employee_id))];
-        
+
         // Fetch profiles for these employees
         const { data: profiles, error: profileError } = await supabase
             .from('profiles')
             .select('id, full_name, employee_id, department, email')
             .in('id', employeeIds);
-        
+
         if (profileError) throw profileError;
-        
+
         // Map profiles to leaves
         const profileMap = new Map(profiles.map(p => [p.id, p]));
         const leavesWithProfiles = leaves.map(leave => ({
             ...leave,
             profiles: profileMap.get(leave.employee_id) || null
         }));
-        
+
         return leavesWithProfiles || [];
     },
 
@@ -73,27 +73,27 @@ const LeaveModel = {
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        
+
         if (!leaves || leaves.length === 0) return [];
-        
+
         // Get unique employee IDs
         const employeeIds = [...new Set(leaves.map(l => l.employee_id))];
-        
+
         // Fetch profiles for these employees
         const { data: profiles, error: profileError } = await supabase
             .from('profiles')
             .select('id, full_name, employee_id, department, email')
             .in('id', employeeIds);
-        
+
         if (profileError) throw profileError;
-        
+
         // Map profiles to leaves
         const profileMap = new Map(profiles.map(p => [p.id, p]));
         const leavesWithProfiles = leaves.map(leave => ({
             ...leave,
             profiles: profileMap.get(leave.employee_id) || null
         }));
-        
+
         return leavesWithProfiles || [];
     },
 
@@ -107,27 +107,27 @@ const LeaveModel = {
             .gte('end_date', date);
 
         if (error) throw error;
-        
+
         if (!leaves || leaves.length === 0) return [];
-        
+
         // Get unique employee IDs
         const employeeIds = [...new Set(leaves.map(l => l.employee_id))];
-        
+
         // Fetch profiles for these employees
         const { data: profiles, error: profileError } = await supabase
             .from('profiles')
             .select('id, full_name, employee_id, department, email')
             .in('id', employeeIds);
-        
+
         if (profileError) throw profileError;
-        
+
         // Map profiles to leaves
         const profileMap = new Map(profiles.map(p => [p.id, p]));
         const leavesWithProfiles = leaves.map(leave => ({
             ...leave,
             profiles: profileMap.get(leave.employee_id) || null
         }));
-        
+
         return leavesWithProfiles || [];
     },
 
@@ -146,14 +146,14 @@ const LeaveModel = {
             .single();
 
         if (error) throw error;
-        
+
         // Fetch profile for this leave
         const { data: profile } = await supabase
             .from('profiles')
             .select('id, full_name, employee_id, department, email')
             .eq('id', data.employee_id)
             .single();
-        
+
         return { ...data, profiles: profile || null };
     },
 
@@ -168,16 +168,16 @@ const LeaveModel = {
         if (error && error.code !== 'PGRST116') {
             throw error;
         }
-        
+
         if (!data) return null;
-        
+
         // Fetch profile for this leave
         const { data: profile } = await supabase
             .from('profiles')
             .select('id, full_name, employee_id, department, email')
             .eq('id', data.employee_id)
             .single();
-        
+
         return { ...data, profiles: profile || null };
     },
 
@@ -207,6 +207,21 @@ const LeaveModel = {
 
         if (error) throw error;
         return data;
+    },
+
+    // Check if user is on approved leave for a specific date
+    async isUserOnLeave(userId, date) {
+        const { data, error } = await supabase
+            .from('leaves')
+            .select('id')
+            .eq('employee_id', userId)
+            .eq('status', 'Approved')
+            .lte('start_date', date)
+            .gte('end_date', date)
+            .maybeSingle();
+
+        if (error) throw error;
+        return !!data;
     }
 };
 
