@@ -1,13 +1,21 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import authService from '../services/authService';
-import { Container, Row, Col, Card, Button, Form, Image, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Image, Badge, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from '../components/layout/Sidebar';
+import ConfirmDialog from '../components/common/ConfirmDialog';
+import useToast from '../hooks/useToast';
 
 const Profile = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, updateUser } = useContext(AuthContext);
   const navigate = useNavigate();
+  const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmConfig, setConfirmConfig] = useState({});
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -28,8 +36,8 @@ const Profile = () => {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        alert("File size too large. Please select an image under 2MB.");
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('File size too large. Please select an image under 2MB.');
         return;
       }
       const reader = new FileReader();
@@ -42,10 +50,11 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
+      setSaving(true);
       const updates = {
         name: profileData.name,
         mobileNumber: profileData.mobileNumber,
-        profilePhoto: profilePhoto // Send base64 image string
+        profilePhoto: profilePhoto
       };
 
       const { user: updatedUser } = await authService.updateUserProfile(updates);
@@ -58,14 +67,20 @@ const Profile = () => {
       });
       setProfilePhoto(updatedUser.profilePhotoUrl || 'https://via.placeholder.com/150');
 
-      setIsEditing(false);
-      alert('Profile updated successfully!');
-      // Reload to ensure all contexts are updated if needed, though state update above handles local view
-      window.location.reload();
+      // Update context without page reload
+      updateUser({
+        name: updatedUser.name,
+        mobileNumber: updatedUser.mobileNumber,
+        profilePhotoUrl: updatedUser.profilePhotoUrl
+      });
 
+      setIsEditing(false);
+      toast.success('Profile updated successfully!');
     } catch (error) {
       console.error("Failed to update profile", error);
-      alert('Failed to update profile.');
+      toast.error('Failed to update profile.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -91,25 +106,38 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    setConfirmConfig({
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      confirmText: 'Logout',
+      variant: 'danger',
+      icon: 'bi-box-arrow-right'
+    });
+    setConfirmAction(() => () => {
+      logout();
+      navigate('/login');
+    });
+    setShowConfirmDialog(true);
   };
 
   return (
-    <Container className="mt-4 px-4">
+    <div className="d-flex">
+      <Sidebar user={user} onLogout={handleLogout} isAdmin={user?.role === 'admin'} />
+      <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>
+    <Container className="mt-4 px-4 pb-4 dashboard-main-content">
       {/* Header */}
       <div className="dashboard-header">
         <div className="d-flex justify-content-between align-items-center flex-wrap">
           <div>
-            <h2>My Profile</h2>
+            <h2><i className="bi bi-person-circle me-2"></i>My Profile</h2>
             <p className="text-muted mb-0">Manage your personal information</p>
           </div>
-          <div className="mt-3 mt-md-0">
-            <Button variant="secondary" className="me-2" onClick={handleBack}>
-              Back to Dashboard
+          <div className="mt-3 mt-md-0 d-none d-lg-block">
+            <Button variant="secondary" className="me-2" onClick={handleBack} aria-label="Back to Dashboard">
+              <i className="bi bi-arrow-left me-1"></i>Back to Dashboard
             </Button>
-            <Button variant="danger" onClick={handleLogout}>
-              Log Out
+            <Button variant="danger" onClick={handleLogout} aria-label="Logout">
+              <i className="bi bi-box-arrow-right me-1"></i>Log Out
             </Button>
           </div>
         </div>
@@ -153,16 +181,16 @@ const Profile = () => {
             <Card.Header className="d-flex justify-content-between align-items-center">
               <strong>Profile Information</strong>
               {!isEditing ? (
-                <Button variant="primary" size="sm" onClick={() => setIsEditing(true)}>
-                  Edit Profile
+                <Button variant="primary" size="sm" onClick={() => setIsEditing(true)} aria-label="Edit Profile">
+                  <i className="bi bi-pencil me-1"></i>Edit Profile
                 </Button>
               ) : (
                 <div>
-                  <Button variant="success" size="sm" className="me-2" onClick={handleSave}>
-                    Save Changes
+                  <Button variant="success" size="sm" className="me-2" onClick={handleSave} disabled={saving} aria-label="Save Changes">
+                    {saving ? <><Spinner animation="border" size="sm" className="me-1" />Saving...</> : <><i className="bi bi-check-lg me-1"></i>Save Changes</>}
                   </Button>
-                  <Button variant="secondary" size="sm" onClick={handleCancel}>
-                    Cancel
+                  <Button variant="secondary" size="sm" onClick={handleCancel} disabled={saving} aria-label="Cancel Editing">
+                    <i className="bi bi-x-lg me-1"></i>Cancel
                   </Button>
                 </div>
               )}
@@ -172,24 +200,26 @@ const Profile = () => {
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Full Name</Form.Label>
+                      <Form.Label><i className="bi bi-person me-1"></i>Full Name</Form.Label>
                       <Form.Control
                         type="text"
                         name="name"
                         value={profileData.name}
                         onChange={handleChange}
                         disabled={!isEditing}
+                        aria-label="Full Name"
                       />
                     </Form.Group>
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Email Address</Form.Label>
+                      <Form.Label><i className="bi bi-envelope me-1"></i>Email Address</Form.Label>
                       <Form.Control
                         type="email"
                         name="email"
                         value={profileData.email}
                         disabled
+                        aria-label="Email Address"
                       />
                     </Form.Group>
                   </Col>
@@ -198,7 +228,7 @@ const Profile = () => {
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Mobile Number</Form.Label>
+                      <Form.Label><i className="bi bi-phone me-1"></i>Mobile Number</Form.Label>
                       <Form.Control
                         type="tel"
                         name="mobileNumber"
@@ -206,17 +236,19 @@ const Profile = () => {
                         onChange={handleChange}
                         disabled={!isEditing}
                         placeholder="Enter mobile number"
+                        aria-label="Mobile Number"
                       />
                     </Form.Group>
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Employee ID</Form.Label>
+                      <Form.Label><i className="bi bi-hash me-1"></i>Employee ID</Form.Label>
                       <Form.Control
                         type="text"
                         name="employeeId"
                         value={profileData.employeeId}
                         disabled
+                        aria-label="Employee ID"
                       />
                     </Form.Group>
                   </Col>
@@ -225,23 +257,25 @@ const Profile = () => {
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Department</Form.Label>
+                      <Form.Label><i className="bi bi-building me-1"></i>Department</Form.Label>
                       <Form.Control
                         type="text"
                         name="department"
                         value={profileData.department}
                         onChange={handleChange}
                         disabled
+                        aria-label="Department"
                       />
                     </Form.Group>
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Role</Form.Label>
+                      <Form.Label><i className="bi bi-shield me-1"></i>Role</Form.Label>
                       <Form.Control
                         type="text"
                         value={profileData.role === 'admin' ? 'Administrator' : 'Employee'}
                         disabled
+                        aria-label="Role"
                       />
                     </Form.Group>
                   </Col>
@@ -251,7 +285,17 @@ const Profile = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        show={showConfirmDialog}
+        onHide={() => setShowConfirmDialog(false)}
+        onConfirm={confirmAction || (() => {})}
+        {...confirmConfig}
+      />
     </Container>
+      </div>
+    </div>
   );
 };
 

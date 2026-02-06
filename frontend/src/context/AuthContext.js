@@ -26,17 +26,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const data = await authService.login(email, password);
-    // data.user should be returned from login
-    // authService sets localStorage, we set state
     if (data.user) {
       setUser(data.user);
     }
     return data.user;
-  };
-
-  const loginAsAdmin = async () => {
-    // Deprecated or redirect to login
-    return login('admin@example.com', 'admin_password_placeholder');
   };
 
   const logout = () => {
@@ -52,8 +45,13 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
+  // Update user data in context (avoids window.location.reload())
+  const updateUser = (updatedUserData) => {
+    setUser(prev => ({ ...prev, ...updatedUserData }));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, loginAsAdmin, logout, register, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, register, updateUser, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );

@@ -1,18 +1,29 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Container, Row, Col, Card, Button, Table, Badge, Form, Modal, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Table, Badge, Form, Modal, Spinner, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import adminService from '../services/adminService';
 import attendanceService from '../services/attendanceService';
 import leaveService from '../services/leaveService';
+import Sidebar from '../components/layout/Sidebar';
+import ConfirmDialog from '../components/common/ConfirmDialog';
+import { StatCardSkeleton, TableRowSkeleton } from '../components/common/SkeletonLoaders';
+import useToast from '../hooks/useToast';
+import { getGreeting, arrayToCSV, downloadCSV } from '../utils/helpers';
 
 const AdminDashboard = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const toast = useToast();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Confirm dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmConfig, setConfirmConfig] = useState({});
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -54,6 +65,7 @@ const AdminDashboard = () => {
       });
     } catch (error) {
       console.error("Error fetching dashboard stats", error);
+      toast.error('Failed to fetch dashboard stats');
     }
   };
 
@@ -64,6 +76,7 @@ const AdminDashboard = () => {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching employees", error);
+      toast.error('Failed to fetch employees');
       setLoading(false);
     }
   };
@@ -103,13 +116,23 @@ const AdminDashboard = () => {
       setShowAttendanceListModal(true);
     } catch (error) {
       console.error(`Error fetching ${type} employees`, error);
-      alert(`Failed to fetch ${type} employees`);
+      toast.error(`Failed to fetch ${type} employees`);
     }
   };
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    setConfirmConfig({
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      confirmText: 'Logout',
+      variant: 'danger',
+      icon: 'bi-box-arrow-right'
+    });
+    setConfirmAction(() => () => {
+      logout();
+      navigate('/login');
+    });
+    setShowConfirmDialog(true);
   };
 
   const handleViewDetails = async (employeeId) => {
@@ -119,6 +142,7 @@ const AdminDashboard = () => {
       setShowDetailsModal(true);
     } catch (error) {
       console.error("Error fetching employee details", error);
+      toast.error('Failed to fetch employee details');
     }
   };
   const downloadReport = async (type) => {
@@ -170,11 +194,24 @@ const AdminDashboard = () => {
       });
 
       doc.save(`Admin_Report_${type}_${new Date().toISOString().split('T')[0]}.pdf`);
-
+      toast.success(`${type === 'daily' ? 'Daily' : 'Monthly'} report downloaded!`);
     } catch (err) {
       console.error(err);
-      alert("Failed to download report");
+      toast.error('Failed to download report');
     }
+  };
+
+  const exportEmployeesCSV = () => {
+    const columns = [
+      { key: 'full_name', label: 'Name' },
+      { key: 'employee_id', label: 'Employee ID' },
+      { key: 'department', label: 'Department' },
+      { key: 'mobile_number', label: 'Mobile' },
+      { key: 'present_status_of_employee', label: 'Status' }
+    ];
+    const csv = arrayToCSV(employees, columns);
+    downloadCSV(csv, `Employees_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success('Employee list exported!');
   };
 
   const downloadEmployeeHistory = async () => {
@@ -193,10 +230,10 @@ const AdminDashboard = () => {
 
       autoTable(doc, { head: [tableColumn], body: tableRows, startY: 30 });
       doc.save(`${selectedEmployee.full_name}_Attendance.pdf`);
-
+      toast.success('Employee attendance history downloaded!');
     } catch (err) {
       console.error(err);
-      alert("Failed to download employee history");
+      toast.error('Failed to download employee history');
     }
   };
 
@@ -220,13 +257,13 @@ const AdminDashboard = () => {
     try {
       setProcessingLeave(true);
       await leaveService.approveLeave(leaveId, leaveRemarks);
-      alert('Leave approved successfully!');
+      toast.success('Leave approved successfully!');
       setLeaveRemarks('');
       await fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter);
       await fetchPendingLeaves();
       await fetchDashboardStats();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to approve leave');
+      toast.error(error.response?.data?.error || 'Failed to approve leave');
     } finally {
       setProcessingLeave(false);
     }
@@ -236,116 +273,157 @@ const AdminDashboard = () => {
     try {
       setProcessingLeave(true);
       await leaveService.rejectLeave(leaveId, leaveRemarks);
-      alert('Leave rejected successfully!');
+      toast.success('Leave rejected successfully!');
       setLeaveRemarks('');
       await fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter);
       await fetchPendingLeaves();
       await fetchDashboardStats();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to reject leave');
+      toast.error(error.response?.data?.error || 'Failed to reject leave');
     } finally {
       setProcessingLeave(false);
     }
   };
 
   return (
-    <Container fluid className="mt-4 px-4">
-      {/* Header */}
-      {/* Header */}
-      <div className="dashboard-header mb-4">
-        <div className="d-flex justify-content-between align-items-center flex-wrap">
-          <div>
-            <h2>Admin Dashboard</h2>
-            <p className="text-muted mb-0">Welcome, {user ? user.name : 'Admin'}! ({user?.email})</p>
-          </div>
-          <div className="mt-3 mt-md-0 d-flex gap-2 flex-wrap">
-            <Button variant="warning" onClick={handleOpenTodayLeavesModal}>
-              📅 Today's Leaves ({dashboardStats.onLeave})
-            </Button>
-            <Button variant="primary" onClick={handleOpenLeaveModal}>
-              📋 Leave Requests {pendingLeaves.length > 0 && <Badge bg="danger" className="ms-1">{pendingLeaves.length}</Badge>}
-            </Button>
-            <Button variant="outline-primary" onClick={() => downloadReport('daily')}>
-              Download Today's Report
-            </Button>
-            <Button variant="outline-success" onClick={() => downloadReport('monthly')}>
-              Download Monthly Report
-            </Button>
-            <Button variant="info" className="ms-2" onClick={() => navigate('/profile')}>
-              My Profile
-            </Button>
-            <Button variant="danger" onClick={handleLogout}>
-              Log Out
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div className="d-flex">
+      {/* Sidebar */}
+      <Sidebar user={user} onLogout={handleLogout} isAdmin={true} />
 
-      {/* Stats Row */}
-      <Row className="mb-4">
-        <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)', color: 'white' }}>
-            <Card.Body>
-              <h3>{dashboardStats.totalEmployees}</h3>
-              <Card.Text>Total Employees</Card.Text>
+      {/* Main Content */}
+      <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>
+        <Container fluid className="mt-4 px-4 pb-4 dashboard-main-content">
+          {/* Header */}
+          <div className="dashboard-header mb-4">
+            <div className="d-flex justify-content-between align-items-center flex-wrap">
+              <div>
+                <h2><i className="bi bi-shield-check me-2"></i>Admin Dashboard</h2>
+                <p className="text-muted mb-0">{getGreeting()}, {user ? user.name : 'Admin'}! ({user?.email})</p>
+              </div>
+              <div className="mt-3 mt-md-0 d-flex gap-2 flex-wrap d-none d-lg-flex">
+                <OverlayTrigger placement="bottom" overlay={<Tooltip>View today's leaves</Tooltip>}>
+                  <Button variant="warning" onClick={handleOpenTodayLeavesModal} aria-label="Today's Leaves">
+                    <i className="bi bi-calendar-event me-1"></i>Today's Leaves ({dashboardStats.onLeave})
+                  </Button>
+                </OverlayTrigger>
+                <OverlayTrigger placement="bottom" overlay={<Tooltip>Manage leave requests</Tooltip>}>
+                  <Button variant="primary" onClick={handleOpenLeaveModal} aria-label="Leave Requests">
+                    <i className="bi bi-envelope me-1"></i>Leave Requests {pendingLeaves.length > 0 && <Badge bg="danger" className="ms-1">{pendingLeaves.length}</Badge>}
+                  </Button>
+                </OverlayTrigger>
+                <Button variant="danger" onClick={handleLogout} aria-label="Logout">
+                  <i className="bi bi-box-arrow-right me-1"></i>Log Out
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions - visible on mobile */}
+          <Card className="content-card mb-4 d-lg-none">
+            <Card.Body className="py-3">
+              <Row className="text-center g-2">
+                <Col xs={6}>
+                  <Button variant="warning" className="w-100 py-2" onClick={handleOpenTodayLeavesModal}>
+                    <i className="bi bi-calendar-event me-1"></i>Today's Leaves
+                  </Button>
+                </Col>
+                <Col xs={6}>
+                  <Button variant="primary" className="w-100 py-2" onClick={handleOpenLeaveModal}>
+                    <i className="bi bi-envelope me-1"></i>Leave Requests
+                  </Button>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
-        </Col>
+
+          {/* Stats Row */}
+          <Row className="mb-4">
+            <Col md={6} lg={3} className="mb-3">
+              {loading ? <StatCardSkeleton /> : (
+              <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)', color: 'white' }}>
+                <Card.Body>
+                  <div className="mb-2"><i className="bi bi-people-fill" style={{ fontSize: '1.5rem' }}></i></div>
+                  <h3>{dashboardStats.totalEmployees}</h3>
+                  <Card.Text>Total Employees</Card.Text>
+                </Card.Body>
+              </Card>
+              )}
+            </Col>
         <Col md={6} lg={3} className="mb-3">
           <Card 
             className="stat-card text-center" 
             style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', cursor: 'pointer' }}
             onClick={() => handleStatCardClick('present')}
+            role="button"
+            aria-label={`Present Today: ${dashboardStats.presentToday}. Click to view list`}
           >
             <Card.Body>
+              <div className="mb-2"><i className="bi bi-check-circle" style={{ fontSize: '1.5rem' }}></i></div>
               <h3>{dashboardStats.presentToday}</h3>
               <Card.Text>Present Today</Card.Text>
               <small style={{ opacity: 0.8 }}>Click to view list</small>
             </Card.Body>
           </Card>
-        </Col>
-        <Col md={6} lg={3} className="mb-3">
+            </Col>
+            <Col md={6} lg={3} className="mb-3">
           <Card 
             className="stat-card text-center" 
             style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white', cursor: 'pointer' }}
             onClick={handleOpenTodayLeavesModal}
+            role="button"
+            aria-label={`On Leave: ${dashboardStats.onLeave}. Click to view list`}
           >
             <Card.Body>
+              <div className="mb-2"><i className="bi bi-calendar-x" style={{ fontSize: '1.5rem' }}></i></div>
               <h3>{dashboardStats.onLeave}</h3>
               <Card.Text>On Leave</Card.Text>
               <small style={{ opacity: 0.8 }}>Click to view list</small>
             </Card.Body>
           </Card>
-        </Col>
-        <Col md={6} lg={3} className="mb-3">
+            </Col>
+            <Col md={6} lg={3} className="mb-3">
           <Card 
             className="stat-card text-center" 
             style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', color: 'white', cursor: 'pointer' }}
             onClick={() => handleStatCardClick('absent')}
+            role="button"
+            aria-label={`Absent Today: ${dashboardStats.absentToday}. Click to view list`}
           >
             <Card.Body>
+              <div className="mb-2"><i className="bi bi-x-circle" style={{ fontSize: '1.5rem' }}></i></div>
               <h3>{dashboardStats.absentToday}</h3>
               <Card.Text>Absent Today</Card.Text>
               <small style={{ opacity: 0.8 }}>Click to view list</small>
             </Card.Body>
           </Card>
-        </Col>
-      </Row>
+            </Col>
+          </Row>
 
       {/* Employee List Table */}
       <Row className="mb-4">
         <Col>
           <Card className="content-card">
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <strong>All Employees</strong>
-              <span className="badge bg-primary">{employees.length} Total</span>
+            <Card.Header className="d-flex justify-content-between align-items-center flex-wrap">
+              <strong><i className="bi bi-people me-2"></i>All Employees</strong>
+              <div className="d-flex gap-2 align-items-center mt-2 mt-md-0">
+                <Button variant="outline-success" size="sm" onClick={exportEmployeesCSV} aria-label="Export Employees CSV">
+                  <i className="bi bi-filetype-csv me-1"></i>CSV
+                </Button>
+                <Button variant="outline-primary" size="sm" onClick={() => downloadReport('daily')} aria-label="Download Daily Report">
+                  <i className="bi bi-file-pdf me-1"></i>Daily
+                </Button>
+                <Button variant="outline-info" size="sm" onClick={() => downloadReport('monthly')} aria-label="Download Monthly Report">
+                  <i className="bi bi-file-pdf me-1"></i>Monthly
+                </Button>
+                <span className="badge bg-primary ms-2">{employees.length} Total</span>
+              </div>
             </Card.Header>
             <Card.Body>
               {loading ? (
-                <div className="text-center py-5">
-                  <Spinner animation="border" variant="primary" />
-                  <p className="mt-3 text-muted">Loading employees...</p>
-                </div>
+                <Table striped bordered hover responsive>
+                  <thead><tr><th>Name</th><th>Department</th><th>Employee ID</th><th>Mobile</th><th>Status</th><th>Action</th></tr></thead>
+                  <tbody><TableRowSkeleton columns={6} rows={5} /></tbody>
+                </Table>
               ) : (
                 <Table striped bordered hover responsive>
                   <thead>
@@ -360,7 +438,7 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {employees.length === 0 ? (
-                      <tr><td colSpan="6" className="text-center text-muted py-4">No employees found</td></tr>
+                      <tr><td colSpan="6" className="text-center text-muted py-4"><i className="bi bi-inbox me-2"></i>No employees found</td></tr>
                     ) : (
                       employees.map((emp) => (
                         <tr key={emp.id}>
@@ -378,8 +456,9 @@ const AdminDashboard = () => {
                               size="sm"
                               variant="info"
                               onClick={() => handleViewDetails(emp.id)}
+                              aria-label={`View details for ${emp.full_name}`}
                             >
-                              View Details
+                              <i className="bi bi-eye me-1"></i>Details
                             </Button>
                           </td>
                         </tr>
@@ -490,7 +569,8 @@ const AdminDashboard = () => {
           color: 'white' 
         }}>
           <Modal.Title>
-            {attendanceListType === 'present' ? '✓ Present Today' : '✗ Absent Today'} ({attendanceListData.length})
+            <i className={`bi ${attendanceListType === 'present' ? 'bi-check-circle' : 'bi-x-circle'} me-2`}></i>
+            {attendanceListType === 'present' ? 'Present Today' : 'Absent Today'} ({attendanceListData.length})
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -539,7 +619,7 @@ const AdminDashboard = () => {
       {/* Leave Requests Management Modal */}
       <Modal show={showLeaveModal} onHide={() => setShowLeaveModal(false)} size="xl">
         <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: 'white' }}>
-          <Modal.Title>📋 Leave Requests Management</Modal.Title>
+          <Modal.Title><i className="bi bi-envelope-paper me-2"></i>Leave Requests Management</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="mb-3 d-flex gap-2">
@@ -621,16 +701,18 @@ const AdminDashboard = () => {
                               variant="success"
                               disabled={processingLeave}
                               onClick={() => handleApproveLeave(leave.id)}
+                              aria-label={`Approve leave for ${leave.profiles?.full_name}`}
                             >
-                              ✓ Approve
+                              <i className="bi bi-check-lg me-1"></i>Approve
                             </Button>
                             <Button 
                               size="sm" 
                               variant="danger"
                               disabled={processingLeave}
                               onClick={() => handleRejectLeave(leave.id)}
+                              aria-label={`Reject leave for ${leave.profiles?.full_name}`}
                             >
-                              ✗ Reject
+                              <i className="bi bi-x-lg me-1"></i>Reject
                             </Button>
                           </div>
                           <Form.Control
@@ -667,7 +749,7 @@ const AdminDashboard = () => {
       {/* Today's Leaves Modal */}
       <Modal show={showTodayLeavesModal} onHide={() => setShowTodayLeavesModal(false)} size="lg">
         <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
-          <Modal.Title>📅 Today's Leaves ({todayLeaves.length})</Modal.Title>
+          <Modal.Title><i className="bi bi-calendar-event me-2"></i>Today's Leaves ({todayLeaves.length})</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {todayLeaves.length === 0 ? (
@@ -716,7 +798,16 @@ const AdminDashboard = () => {
         </Modal.Footer>
       </Modal>
 
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        show={showConfirmDialog}
+        onHide={() => setShowConfirmDialog(false)}
+        onConfirm={confirmAction || (() => {})}
+        {...confirmConfig}
+      />
     </Container>
+      </div>
+    </div>
   );
 };
 

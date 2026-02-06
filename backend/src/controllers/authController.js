@@ -21,8 +21,8 @@ const authController = {
         try {
             const { email, password, fullName, role, department, mobileNumber, employeeId, profilePhoto } = req.body;
 
-            // 0. Check for Single Admin Policy - REMOVED to allow multiple admins
-            // if (role === 'admin') { ... }
+            // SECURITY: Force role to 'employee' - admin accounts must be created by existing admins
+            const safeRole = 'employee';
 
             // 1. Create Auth User
             const { data: authData, error: authError } = await AuthModel.signUp(email, password);
@@ -39,8 +39,8 @@ const authController = {
                     id: user.id,
                     email: user.email,
                     full_name: fullName,
-                    role: role || 'employee',
-                    department: role === 'admin' ? '' : department, // Ensure department is empty for admin
+                    role: safeRole,
+                    department: department || '',
                     mobile_number: mobileNumber,
                     employee_id: employeeId,
                     profile_photo: profilePhoto || null
