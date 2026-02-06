@@ -3,7 +3,7 @@ import { Nav, Button, Offcanvas } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getInitials } from '../../utils/helpers';
 
-const Sidebar = ({ user, onLogout, isAdmin = false }) => {
+const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMobile, setShowMobile] = useState(false);
@@ -83,9 +83,27 @@ const Sidebar = ({ user, onLogout, isAdmin = false }) => {
 
   return (
     <>
+      {/* Desktop Toggle Button - shown when sidebar is collapsed */}
+      {collapsed && onToggle && (
+        <Button
+          variant="light"
+          className="position-fixed d-none d-lg-flex align-items-center justify-content-center"
+          style={{
+            top: '1rem', left: '1rem', zIndex: 1051,
+            width: '42px', height: '42px', borderRadius: '10px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+            border: '1px solid #E5E7EB'
+          }}
+          onClick={onToggle}
+          aria-label="Open sidebar"
+        >
+          <i className="bi bi-list" style={{ fontSize: '1.3rem' }}></i>
+        </Button>
+      )}
+
       {/* Mobile Toggle Button */}
-      <Button 
-        variant="primary" 
+      <Button
+        variant="primary"
         className="sidebar-toggle d-lg-none position-fixed"
         style={{ top: '1rem', left: '1rem', zIndex: 1050 }}
         onClick={() => setShowMobile(true)}
@@ -95,9 +113,9 @@ const Sidebar = ({ user, onLogout, isAdmin = false }) => {
       </Button>
 
       {/* Mobile Offcanvas Sidebar */}
-      <Offcanvas 
-        show={showMobile} 
-        onHide={() => setShowMobile(false)} 
+      <Offcanvas
+        show={showMobile}
+        onHide={() => setShowMobile(false)}
         className="d-lg-none sidebar-offcanvas"
         style={{ width: '260px' }}
       >
@@ -121,13 +139,26 @@ const Sidebar = ({ user, onLogout, isAdmin = false }) => {
         top: 0,
         left: 0,
         zIndex: 1000,
-        boxShadow: '2px 0 10px rgba(0,0,0,0.05)'
+        boxShadow: '2px 0 10px rgba(0,0,0,0.05)',
+        transform: collapsed ? 'translateX(-100%)' : 'translateX(0)',
+        transition: 'transform 0.3s ease'
       }}>
-        {/* Brand */}
-        <div className="p-3 text-center border-bottom">
+        {/* Brand with toggle */}
+        <div className="p-3 border-bottom d-flex align-items-center justify-content-between">
           <h5 className="mb-0 fw-bold">
             <i className="bi bi-cloud-check me-2 text-primary"></i>CBALMS
           </h5>
+          {onToggle && (
+            <Button
+              variant="link"
+              className="p-0 text-dark"
+              onClick={onToggle}
+              aria-label="Collapse sidebar"
+              style={{ fontSize: '1.3rem', lineHeight: 1 }}
+            >
+              <i className="bi bi-list"></i>
+            </Button>
+          )}
         </div>
         <SidebarContent />
       </div>

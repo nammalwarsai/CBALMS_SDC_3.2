@@ -439,6 +439,9 @@
     margin-left: 250px !important;
     transition: margin-left 0.3s ease;
   }
+  .dashboard-main-content.sidebar-collapsed {
+    margin-left: 0 !important;
+  }
 }
 
 /* ===== Page Transition ===== */
@@ -619,7 +622,7 @@
 
 .placeholder-glow .placeholder {
   animation: shimmer 1.5s infinite linear;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #000000 25%, #000000 50%, #000000 75%);
   background-size: 200px 100%;
 }
 

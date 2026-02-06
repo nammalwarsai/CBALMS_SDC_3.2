@@ -43,6 +43,7 @@ const EmployeeDashboard = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmConfig, setConfirmConfig] = useState({});
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Use custom hook for attendance status logic
   const { canCheckIn, canCheckOut, isCheckedOut, reason, statusBadgeVariant } = useAttendanceStatus(leaveHistory, attendanceStatus);
@@ -276,11 +277,11 @@ const EmployeeDashboard = () => {
   return (
     <div className="d-flex">
       {/* Sidebar */}
-      <Sidebar user={user} onLogout={handleLogout} isAdmin={false} />
+      <Sidebar user={user} onLogout={handleLogout} isAdmin={false} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
       {/* Main Content */}
       <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>
-        <Container fluid className="mt-4 px-4 pb-4 dashboard-main-content">
+        <Container fluid className={`mt-4 px-4 pb-4 dashboard-main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           {/* Header */}
           <div className="dashboard-header">
             <div className="d-flex justify-content-between align-items-center flex-wrap">

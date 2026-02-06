@@ -43,6 +43,7 @@ const AdminDashboard = () => {
   // Leave management states
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showTodayLeavesModal, setShowTodayLeavesModal] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [leaveRemarks, setLeaveRemarks] = useState('');
   const [processingLeave, setProcessingLeave] = useState(false);
@@ -288,11 +289,11 @@ const AdminDashboard = () => {
   return (
     <div className="d-flex">
       {/* Sidebar */}
-      <Sidebar user={user} onLogout={handleLogout} isAdmin={true} />
+      <Sidebar user={user} onLogout={handleLogout} isAdmin={true} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
       {/* Main Content */}
       <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>
-        <Container fluid className="mt-4 px-4 pb-4 dashboard-main-content">
+        <Container fluid className={`mt-4 px-4 pb-4 dashboard-main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           {/* Header */}
           <div className="dashboard-header mb-4">
             <div className="d-flex justify-content-between align-items-center flex-wrap">
@@ -301,6 +302,11 @@ const AdminDashboard = () => {
                 <p className="text-muted mb-0">{getGreeting()}, {user ? user.name : 'Admin'}! ({user?.email})</p>
               </div>
               <div className="mt-3 mt-md-0 d-flex gap-2 flex-wrap d-none d-lg-flex">
+                <OverlayTrigger placement="bottom" overlay={<Tooltip>View and edit your profile</Tooltip>}>
+                  <Button variant="info" onClick={() => navigate('/profile')} aria-label="My Profile">
+                    <i className="bi bi-person me-1"></i>My Profile
+                  </Button>
+                </OverlayTrigger>
                 <OverlayTrigger placement="bottom" overlay={<Tooltip>View today's leaves</Tooltip>}>
                   <Button variant="warning" onClick={handleOpenTodayLeavesModal} aria-label="Today's Leaves">
                     <i className="bi bi-calendar-event me-1"></i>Today's Leaves ({dashboardStats.onLeave})
@@ -322,14 +328,19 @@ const AdminDashboard = () => {
           <Card className="content-card mb-4 d-lg-none">
             <Card.Body className="py-3">
               <Row className="text-center g-2">
-                <Col xs={6}>
-                  <Button variant="warning" className="w-100 py-2" onClick={handleOpenTodayLeavesModal}>
-                    <i className="bi bi-calendar-event me-1"></i>Today's Leaves
+                <Col xs={4}>
+                  <Button variant="info" className="w-100 py-2" onClick={() => navigate('/profile')}>
+                    <i className="bi bi-person me-1"></i>Profile
                   </Button>
                 </Col>
-                <Col xs={6}>
+                <Col xs={4}>
+                  <Button variant="warning" className="w-100 py-2" onClick={handleOpenTodayLeavesModal}>
+                    <i className="bi bi-calendar-event me-1"></i>Leaves
+                  </Button>
+                </Col>
+                <Col xs={4}>
                   <Button variant="primary" className="w-100 py-2" onClick={handleOpenLeaveModal}>
-                    <i className="bi bi-envelope me-1"></i>Leave Requests
+                    <i className="bi bi-envelope me-1"></i>Requests
                   </Button>
                 </Col>
               </Row>
