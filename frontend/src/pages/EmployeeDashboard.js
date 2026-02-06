@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, Legend } from 'recharts';
 import attendanceService from '../services/attendanceService';
 import leaveService from '../services/leaveService';
+import leaveBalanceService from '../services/leaveBalanceService';
 import CalendarComponent from '../components/CalendarComponent';
 import Sidebar from '../components/layout/Sidebar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
@@ -38,6 +39,7 @@ const EmployeeDashboard = () => {
     endDate: '',
     reason: ''
   });
+  const [serverLeaveBalances, setServerLeaveBalances] = useState(null);
 
   // Confirm dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -53,9 +55,22 @@ const EmployeeDashboard = () => {
     if (user?.id) {
       fetchAttendanceData();
       fetchLeaveHistory();
+      fetchServerLeaveBalances();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const fetchServerLeaveBalances = async () => {
+    try {
+      const response = await leaveBalanceService.getMyBalances();
+      if (response.data && response.data.length > 0) {
+        setServerLeaveBalances(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching server leave balances", error);
+      // Fall back to local calculation
+    }
+  };
 
   const fetchAttendanceData = async () => {
     try {
@@ -89,6 +104,32 @@ const EmployeeDashboard = () => {
 
   // Calculate leave balance
   const leaveBalance = useMemo(() => {
+    // Prefer server-side leave balances if available
+    if (serverLeaveBalances && serverLeaveBalances.length > 0) {
+      const balanceMap = {};
+      const usedMap = {};
+      let totalRemaining = 0;
+
+      serverLeaveBalances.forEach(b => {
+        balanceMap[b.leave_type] = b.remaining_days;
+        usedMap[b.leave_type] = b.used_days;
+        totalRemaining += b.remaining_days;
+      });
+
+      return {
+        Sick: balanceMap.Sick || 0,
+        Casual: balanceMap.Casual || 0,
+        Earned: balanceMap.Earned || 0,
+        total: totalRemaining,
+        used: {
+          Sick: usedMap.Sick || 0,
+          Casual: usedMap.Casual || 0,
+          Earned: usedMap.Earned || 0
+        }
+      };
+    }
+
+    // Fallback: calculate locally from leave history
     const used = { Sick: 0, Casual: 0, Earned: 0 };
     leaveHistory.forEach(leave => {
       if (leave.status === 'Approved' && used.hasOwnProperty(leave.leave_type)) {
@@ -103,7 +144,7 @@ const EmployeeDashboard = () => {
       total: Math.max(0, (LEAVE_POLICY.Sick + LEAVE_POLICY.Casual + LEAVE_POLICY.Earned) - (used.Sick + used.Casual + used.Earned)),
       used
     };
-  }, [leaveHistory]);
+  }, [leaveHistory, serverLeaveBalances]);
 
   // Calculate days absent
   const daysAbsent = useMemo(() => {
@@ -215,6 +256,7 @@ const EmployeeDashboard = () => {
       toast.success('Leave application submitted successfully!');
       setLeaveForm({ leaveType: 'Sick', startDate: '', endDate: '', reason: '' });
       fetchLeaveHistory();
+      fetchServerLeaveBalances();
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to submit leave application');
     } finally {
@@ -235,6 +277,7 @@ const EmployeeDashboard = () => {
         await leaveService.cancelLeave(leaveId);
         toast.success('Leave request cancelled successfully');
         fetchLeaveHistory();
+        fetchServerLeaveBalances();
       } catch (error) {
         toast.error(error.response?.data?.error || 'Failed to cancel leave request');
       }

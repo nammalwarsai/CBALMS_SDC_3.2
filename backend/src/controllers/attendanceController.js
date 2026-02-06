@@ -1,36 +1,48 @@
 const AttendanceModel = require('../models/attendanceModel');
 
+// Standardized time formatting with explicit timezone
+const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata'
+    });
+};
+
 const attendanceController = {
-    async checkIn(req, res) {
+    async checkIn(req, res, next) {
         try {
-            const { userId } = req.body; // or from req.user.id if middleware adds it
+            // SECURITY FIX: Use authenticated user ID from middleware, not from request body
+            const userId = req.user.id;
             const today = new Date().toISOString().split('T')[0];
             const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', { hour12: true }); // e.g., "09:00 AM"
+            const timeString = formatTime(now);
 
-            // 0. Check for Weekend restriction (Sat/Sun)
+            // Check for Weekend restriction (Sat/Sun)
             const dayOfWeek = now.getDay();
             if (dayOfWeek === 0 || dayOfWeek === 6) {
                 return res.status(400).json({ error: 'Cannot check in on weekends (Saturday/Sunday).' });
             }
 
-            // 1. Check if already checked in today
+            // Check if already checked in today
             const existingRecord = await AttendanceModel.getAttendanceByDate(userId, today);
 
             if (existingRecord) {
                 return res.status(400).json({ error: 'Already checked in for today' });
             }
 
-            // 1.5 Check if user is on approved leave
+            // Check if user is on approved leave
             const onLeave = await require('../models/leaveModel').isUserOnLeave(userId, today);
             if (onLeave) {
                 return res.status(400).json({ error: 'It is your leave period. You cannot check in.' });
             }
 
-            // 2. Create Attendance Record
+            // Create Attendance Record
             const newRecord = await AttendanceModel.createAttendance(userId, timeString, today);
 
-            // 3. Update Profile Status
+            // Update Profile Status
             await AttendanceModel.updateProfileStatus(userId, 'Present');
 
             res.status(201).json({
@@ -39,19 +51,19 @@ const attendanceController = {
             });
 
         } catch (error) {
-            console.error('Check-in Error:', error);
-            res.status(500).json({ error: 'Server error during check-in' });
+            next(error);
         }
     },
 
-    async checkOut(req, res) {
+    async checkOut(req, res, next) {
         try {
-            const { userId } = req.body;
+            // SECURITY FIX: Use authenticated user ID from middleware, not from request body
+            const userId = req.user.id;
             const today = new Date().toISOString().split('T')[0];
             const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', { hour12: true });
+            const timeString = formatTime(now);
 
-            // 1. Get today's record
+            // Get today's record
             const existingRecord = await AttendanceModel.getAttendanceByDate(userId, today);
 
             if (!existingRecord) {
@@ -62,13 +74,13 @@ const attendanceController = {
                 return res.status(400).json({ error: 'Already checked out for today' });
             }
 
-            // 2. Update Record with Check Out time
+            // Update Record with Check Out time
             const updatedRecord = await AttendanceModel.updateAttendance(existingRecord.id, {
                 check_out: timeString
             });
 
-            // 3. Update Profile Status
-            await AttendanceModel.updateProfileStatus(userId, 'Absent'); // Or 'Checked Out'
+            // Update Profile Status
+            await AttendanceModel.updateProfileStatus(userId, 'Absent');
 
             res.status(200).json({
                 message: 'Checked out successfully',
@@ -76,23 +88,27 @@ const attendanceController = {
             });
 
         } catch (error) {
-            console.error('Check-out Error:', error);
-            res.status(500).json({ error: 'Server error during check-out' });
+            next(error);
         }
     },
 
-    async getHistory(req, res) {
+    async getHistory(req, res, next) {
         try {
             const { userId } = req.params;
-            const history = await AttendanceModel.getAttendanceHistory(userId);
-            res.status(200).json({ data: history });
+            const page = parseInt(req.query.page) || 1;
+            const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+
+            const history = await AttendanceModel.getAttendanceHistory(userId, page, limit);
+            res.status(200).json({
+                data: history.data,
+                pagination: { total: history.total, page: history.page, limit: history.limit }
+            });
         } catch (error) {
-            console.error('Get History Error:', error);
-            res.status(500).json({ error: 'Server error fetching history' });
+            next(error);
         }
     },
 
-    async getStatus(req, res) {
+    async getStatus(req, res, next) {
         try {
             const { userId } = req.params;
             const today = new Date().toISOString().split('T')[0];
@@ -111,8 +127,7 @@ const attendanceController = {
             res.status(200).json({ status: status, record: record });
 
         } catch (error) {
-            console.error('Get Status Error:', error);
-            res.status(500).json({ error: 'Server error fetching status' });
+            next(error);
         }
     }
 };

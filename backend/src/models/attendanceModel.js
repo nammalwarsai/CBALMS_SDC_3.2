@@ -8,12 +8,10 @@ const AttendanceModel = {
             .select('*')
             .eq('employee_id', userId)
             .eq('date', date)
-            .single();
+            .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "Row not found"
-            throw error;
-        }
-        return data; // Returns null if not found (when using .single() with error handling usually throws, but let's handle in controller or here)
+        if (error) throw error;
+        return data;
     },
 
     // Create a new attendance record (Check In)
@@ -46,16 +44,20 @@ const AttendanceModel = {
         return data;
     },
 
-    // Get attendance history for a user
-    async getAttendanceHistory(userId) {
-        const { data, error } = await supabase
+    // Get attendance history for a user with pagination
+    async getAttendanceHistory(userId, page = 1, limit = 50) {
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        const { data, error, count } = await supabase
             .from('attendance')
-            .select('*')
+            .select('*', { count: 'exact' })
             .eq('employee_id', userId)
-            .order('date', { ascending: false });
+            .order('date', { ascending: false })
+            .range(from, to);
 
         if (error) throw error;
-        return data;
+        return { data: data || [], total: count || 0, page, limit };
     },
 
     // Get today's attendance records
@@ -80,7 +82,7 @@ const AttendanceModel = {
         return data;
     },
 
-    // Get all attendance records within a date range with user details
+    // Get all attendance records within a date range with user details (Supabase join)
     async getAttendanceWithDetails(startDate, endDate) {
         const { data, error } = await supabase
             .from('attendance')
@@ -95,12 +97,6 @@ const AttendanceModel = {
 
     // Get count of present employees for a specific date
     async getPresentCount(date) {
-        // We select distinct employee_ids for the given date
-        // Since Supabase .count() with head:true doesn't support distinct easily on the client side without RPC
-        // We will fetch just the employee_ids and count unique ones.
-        // Or better yet, rely on the fact that an employee can only check in once per day (as per rules),
-        // so we can just count the rows.
-
         const { count, error } = await supabase
             .from('attendance')
             .select('*', { count: 'exact', head: true })
@@ -114,11 +110,9 @@ const AttendanceModel = {
     async processAutoCheckout() {
         const today = new Date().toISOString().split('T')[0];
         const now = new Date();
-        const checkoutTime = '18:00:00'; // 6:00 PM
+        const checkoutTime = '06:00:00 PM';
 
-        // 1. Fetch all records where check_out is NULL
-        // We will filter in application logic for more complex date usage or let Supabase filter if possible.
-        // For simplicity and correctness with timezones, let's fetch 'Present' or null checkout records.
+        // Fetch all records where check_out is NULL
         const { data: openRecords, error } = await supabase
             .from('attendance')
             .select('*')
@@ -133,35 +127,27 @@ const AttendanceModel = {
 
         const updates = [];
         for (const record of openRecords) {
-            // Check if record needs auto-checkout
-            // Condition: Date is BEFORE today OR (Date is TODAY AND Current Time > 18:00)
             const recordDate = record.date;
-
             let shouldCheckout = false;
 
             if (recordDate < today) {
                 shouldCheckout = true;
             } else if (recordDate === today) {
-                // Check if current time is past 18:00
                 const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-                // 18:00 implies hour >= 18. If exactly 18:00 we might want to wait until 18:01 to be safe, but >= 18 is fine.
                 if (currentHour >= 18) {
                     shouldCheckout = true;
                 }
             }
 
             if (shouldCheckout) {
-                // Update Attendance Record
                 const updateAttendance = supabase
                     .from('attendance')
                     .update({
                         check_out: checkoutTime,
-                        status: 'Present' // explicit, though likely already Present
+                        status: 'Present'
                     })
                     .eq('id', record.id);
 
-                // Update Profile Status (mark as Absent since they are now checked out)
                 const updateProfile = supabase
                     .from('profiles')
                     .update({ present_status_of_employee: 'Absent' })

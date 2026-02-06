@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const errorHandler = require('./src/middleware/errorHandler');
 const authRoutes = require('./src/routes/authRoutes');
 
 dotenv.config();
@@ -44,26 +45,25 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Test route
+app.get('/', (req, res) => {
+  res.send(`Backend is running on port ${PORT}`);
+});
+
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/attendance', require('./src/routes/attendanceRoutes'));
 app.use('/api/admin', require('./src/routes/adminRoutes'));
 app.use('/api/leaves', require('./src/routes/leaveRoutes'));
+app.use('/api/notifications', require('./src/routes/notificationRoutes'));
+app.use('/api/leave-balances', require('./src/routes/leaveBalanceRoutes'));
 
 // Initialize Cron Jobs
 const { initCronJobs } = require('./src/services/cronService');
 initCronJobs();
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('Unhandled Error:', err);
-  res.status(500).json({ error: 'An unexpected error occurred. Please try again later.' });
-});
-
-// Test route
-app.get('/', (req, res) => {
-  res.send(`Backend is running on port ${PORT}`);
-});
+// Centralized error handling middleware (must be last)
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {

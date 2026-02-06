@@ -1,5 +1,6 @@
 const AuthModel = require('../models/authModel');
 const ProfileModel = require('../models/profileModel');
+const LeaveBalanceModel = require('../models/leaveBalanceModel');
 
 const normalizeUser = (user, profile) => {
     if (!user) return null;
@@ -11,13 +12,13 @@ const normalizeUser = (user, profile) => {
         mobileNumber: profileData.mobile_number || '',
         employeeId: profileData.employee_id || '',
         role: profileData.role || 'employee',
-        profilePhotoUrl: profileData.profile_photo || '', // Map DB field to frontend prop
-        profile: profileData // Keep original profile just in case
+        profilePhotoUrl: profileData.profile_photo || '',
+        profile: profileData
     };
 };
 
 const authController = {
-    async signup(req, res) {
+    async signup(req, res, next) {
         try {
             const { email, password, fullName, role, department, mobileNumber, employeeId, profilePhoto } = req.body;
 
@@ -48,7 +49,14 @@ const authController = {
 
                 try {
                     await ProfileModel.createProfile(profileData);
-                    // normalize user for response
+
+                    // 3. Initialize leave balances for the new employee
+                    try {
+                        await LeaveBalanceModel.initializeBalances(user.id);
+                    } catch (balanceError) {
+                        console.error('Leave balance initialization error:', balanceError);
+                    }
+
                     const normalizedUser = normalizeUser(user, profileData);
 
                     return res.status(201).json({
@@ -58,8 +66,6 @@ const authController = {
                     });
                 } catch (profileError) {
                     console.error('Profile creation error:', profileError);
-                    // If profile creation fails, we might still want to return success but warn?
-                    // Or maybe fail? For now, let's return with partial data
                     return res.status(201).json({
                         message: 'User registered but profile creation failed',
                         user: normalizeUser(user, {}),
@@ -68,12 +74,11 @@ const authController = {
                 }
             }
         } catch (error) {
-            console.error('Signup Controller Error:', error);
-            res.status(500).json({ error: 'Server error during signup' });
+            next(error);
         }
     },
 
-    async login(req, res) {
+    async login(req, res, next) {
         try {
             const { email, password } = req.body;
             const { data, error } = await AuthModel.signIn(email, password);
@@ -92,16 +97,6 @@ const authController = {
                 }
             }
 
-            // WEEKEND RESTRICTION - REMOVED per user feedback. Employees CAN login, but cannot check-in.
-            /*
-            if (profile && profile.role !== 'admin') {
-                const dayOfWeek = new Date().getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    return res.status(403).json({ error: 'Employees cannot log in on weekends (Saturday/Sunday).' });
-                }
-            }
-            */
-
             const normalizedUser = normalizeUser(data.user, profile);
 
             res.status(200).json({
@@ -111,12 +106,11 @@ const authController = {
             });
 
         } catch (error) {
-            console.error('Login Controller Error:', error);
-            res.status(500).json({ error: 'Server error during login' });
+            next(error);
         }
     },
 
-    async getMe(req, res) {
+    async getMe(req, res, next) {
         try {
             const user = req.user;
             let profile = null;
@@ -132,17 +126,15 @@ const authController = {
                 user: normalizedUser
             });
         } catch (error) {
-            res.status(500).json({ error: 'Error fetching user details' });
+            next(error);
         }
     },
 
-    async updateProfile(req, res) {
+    async updateProfile(req, res, next) {
         try {
             const user = req.user;
             const { name, mobileNumber, profilePhoto } = req.body;
 
-            // Prepare updates. Only allow specific fields.
-            // Database is flat: full_name, mobile_number, profile_photo
             const updates = {};
             if (name !== undefined) updates.full_name = name;
             if (mobileNumber !== undefined) updates.mobile_number = mobileNumber;
@@ -160,7 +152,6 @@ const authController = {
                 return res.status(500).json({ error: 'Failed to update profile in database' });
             }
 
-            // Return updated user object
             const normalizedUser = normalizeUser(user, updatedProfile);
 
             res.status(200).json({
@@ -169,8 +160,7 @@ const authController = {
             });
 
         } catch (error) {
-            console.error('Update Profile Controller Error:', error);
-            res.status(500).json({ error: 'Server error during profile update' });
+            next(error);
         }
     }
 };

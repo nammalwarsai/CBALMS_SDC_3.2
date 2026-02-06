@@ -1,7 +1,7 @@
 const Joi = require('joi');
 
 const validate = (schema) => (req, res, next) => {
-  const { error } = schema.validate(req.body, { abortEarly: false });
+  const { error } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
   if (error) {
     const errorMessages = error.details.map(detail => detail.message).join(', ');
     return res.status(400).json({ error: errorMessages });
@@ -24,14 +24,16 @@ const signupSchema = Joi.object({
       'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
       'any.required': 'Password is required'
     }),
-  name: Joi.string().allow('', null),
-  fullName: Joi.string().allow('', null),
+  name: Joi.string().max(100).allow('', null),
+  fullName: Joi.string().max(100).allow('', null),
   role: Joi.string().valid('employee').default('employee').messages({
     'any.only': 'Registration is only allowed for employee role'
   }),
-  department: Joi.string().allow('', null),
-  mobileNumber: Joi.string().allow('', null),
-  employeeId: Joi.string().allow('', null),
+  department: Joi.string().max(100).allow('', null),
+  mobileNumber: Joi.string().pattern(/^[0-9+\-\s()]{7,15}$/).allow('', null).messages({
+    'string.pattern.base': 'Please provide a valid mobile number'
+  }),
+  employeeId: Joi.string().max(50).allow('', null),
   confirmPassword: Joi.string().allow('', null),
   profilePhoto: Joi.string().allow('', null)
 });
@@ -52,20 +54,20 @@ const leaveSchema = Joi.object({
     'any.required': 'Leave type is required'
   }),
   startDate: Joi.date().iso().required().messages({
-    'date.format': 'Start date must be a valid date',
+    'date.format': 'Start date must be a valid ISO date',
     'any.required': 'Start date is required'
   }),
   endDate: Joi.date().iso().min(Joi.ref('startDate')).required().messages({
     'date.min': 'End date must be after or equal to start date',
     'any.required': 'End date is required'
   }),
-  reason: Joi.string().max(500).allow('', null).messages({
+  reason: Joi.string().trim().max(500).allow('', null).messages({
     'string.max': 'Reason must be less than 500 characters'
   })
 });
 
 const updateProfileSchema = Joi.object({
-  name: Joi.string().min(1).max(100).allow('', null),
+  name: Joi.string().trim().min(1).max(100).allow('', null),
   mobileNumber: Joi.string().pattern(/^[0-9+\-\s()]{7,15}$/).allow('', null).messages({
     'string.pattern.base': 'Please provide a valid mobile number'
   }),
@@ -77,7 +79,9 @@ const leaveStatusSchema = Joi.object({
     'any.only': 'Status must be Approved or Rejected',
     'any.required': 'Status is required'
   }),
-  remarks: Joi.string().max(500).allow('', null)
+  remarks: Joi.string().trim().max(500).allow('', null).messages({
+    'string.max': 'Remarks must be less than 500 characters'
+  })
 });
 
 module.exports = {

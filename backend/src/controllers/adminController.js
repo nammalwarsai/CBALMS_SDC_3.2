@@ -3,22 +3,17 @@ const AttendanceModel = require('../models/attendanceModel');
 const LeaveModel = require('../models/leaveModel');
 
 const adminController = {
-    // Get dashboard statistics (present, absent, on leave counts)
-    async getDashboardStats(req, res) {
+    // Get dashboard statistics
+    async getDashboardStats(req, res, next) {
         try {
             const today = new Date().toISOString().split('T')[0];
 
-            // Get total employees count using optimized query
-            const totalEmployees = await ProfileModel.getProfileCount();
+            const [totalEmployees, presentCount, onLeaveCount] = await Promise.all([
+                ProfileModel.getProfileCount(),
+                AttendanceModel.getPresentCount(today),
+                LeaveModel.getApprovedLeavesCountForDate(today)
+            ]);
 
-            // Get present count efficiently
-            const presentCount = await AttendanceModel.getPresentCount(today);
-
-            // Get approved leaves for today
-            const onLeaveCount = await LeaveModel.getApprovedLeavesCountForDate(today);
-
-            // Calculate absent employees (total - present - on leave)
-            // Note: This is an estimation if numbers drift, but much faster.
             const absentCount = Math.max(0, totalEmployees - presentCount - onLeaveCount);
 
             res.status(200).json({
@@ -30,30 +25,30 @@ const adminController = {
                 }
             });
         } catch (error) {
-            console.error('Get Dashboard Stats Error:', error);
-            res.status(500).json({ error: 'Server error fetching dashboard stats' });
+            next(error);
         }
     },
 
     // Get list of present or absent employees
-    async getAttendanceList(req, res) {
+    async getAttendanceList(req, res, next) {
         try {
-            const { type } = req.query; // 'present' or 'absent'
+            const { type } = req.query;
             const today = new Date().toISOString().split('T')[0];
 
-            // Get all employees with basic info (lighter payload)
-            const allEmployees = await ProfileModel.getBasicProfiles();
+            if (!['present', 'absent'].includes(type)) {
+                return res.status(400).json({ error: 'Invalid type. Use "present" or "absent"' });
+            }
 
-            // Get today's attendance records
-            const todayAttendance = await AttendanceModel.getTodayAttendance(today);
+            const [allEmployees, todayAttendance] = await Promise.all([
+                ProfileModel.getBasicProfiles(),
+                AttendanceModel.getTodayAttendance(today)
+            ]);
 
-            // Create a map of employee IDs to their attendance record
             const attendanceMap = new Map(todayAttendance.map(att => [att.employee_id, att]));
 
             let resultList = [];
 
             if (type === 'present') {
-                // Return employees who have checked in today
                 resultList = allEmployees
                     .filter(emp => attendanceMap.has(emp.id))
                     .map(emp => ({
@@ -61,33 +56,26 @@ const adminController = {
                         check_in: attendanceMap.get(emp.id)?.check_in || '-',
                         check_out: attendanceMap.get(emp.id)?.check_out || '-'
                     }));
-            } else if (type === 'absent') {
-                // Return employees who have NOT checked in today
-                resultList = allEmployees.filter(emp => !attendanceMap.has(emp.id));
             } else {
-                return res.status(400).json({ error: 'Invalid type. Use "present" or "absent"' });
+                resultList = allEmployees.filter(emp => !attendanceMap.has(emp.id));
             }
 
             res.status(200).json({ data: resultList });
         } catch (error) {
-            console.error('Get Attendance List Error:', error);
-            res.status(500).json({ error: 'Server error fetching attendance list' });
+            next(error);
         }
     },
 
-    async getAllEmployees(req, res) {
+    async getAllEmployees(req, res, next) {
         try {
             const employees = await ProfileModel.getBasicProfiles();
-            // Filter out admins if necessary, or just return all
-            // const nonAdmins = employees.filter(emp => emp.role !== 'admin');
             res.status(200).json({ data: employees });
         } catch (error) {
-            console.error('Get All Employees Error:', error);
-            res.status(500).json({ error: 'Server error fetching employees' });
+            next(error);
         }
     },
 
-    async getEmployeeDetails(req, res) {
+    async getEmployeeDetails(req, res, next) {
         try {
             const { id } = req.params;
             const profile = await ProfileModel.getProfileById(id);
@@ -96,15 +84,12 @@ const adminController = {
                 return res.status(404).json({ error: 'Employee not found' });
             }
 
-            // Optional: Fetch recent attendance history or stats
             let recentAttendance = [];
             try {
-                recentAttendance = await AttendanceModel.getAttendanceHistory(id);
-                // Limit to last 5 records
-                recentAttendance = recentAttendance.slice(0, 5);
+                const history = await AttendanceModel.getAttendanceHistory(id, 1, 5);
+                recentAttendance = history.data;
             } catch (err) {
                 console.error('Error fetching attendance for details:', err);
-                // Continue without attendance if it fails
             }
 
             res.status(200).json({
@@ -114,30 +99,27 @@ const adminController = {
                 }
             });
         } catch (error) {
-            console.error('Get Employee Details Error:', error);
-            res.status(500).json({ error: 'Server error fetching employee details' });
+            next(error);
         }
     },
 
-    async getAttendanceReport(req, res) {
+    async getAttendanceReport(req, res, next) {
         try {
-            const { type, date } = req.query; // type: 'daily' or 'monthly'
+            const { type, date } = req.query;
 
             let startDate, endDate;
             const today = new Date();
 
             if (type === 'daily') {
-                // specific date or today
                 const targetDate = date || today.toISOString().split('T')[0];
                 startDate = targetDate;
                 endDate = targetDate;
             } else if (type === 'monthly') {
-                // Last 30 days
                 const priorDate = new Date(new Date().setDate(today.getDate() - 30));
                 startDate = priorDate.toISOString().split('T')[0];
                 endDate = today.toISOString().split('T')[0];
             } else {
-                return res.status(400).json({ error: 'Invalid report type' });
+                return res.status(400).json({ error: 'Invalid report type. Use "daily" or "monthly"' });
             }
 
             const report = await AttendanceModel.getAttendanceWithDetails(startDate, endDate);
@@ -165,8 +147,7 @@ const adminController = {
             res.status(200).json({ data: report });
 
         } catch (error) {
-            console.error('Get Report Error:', error);
-            res.status(500).json({ error: 'Server error generating report' });
+            next(error);
         }
     }
 };
