@@ -48,6 +48,29 @@ const loginSchema = Joi.object({
   })
 });
 
+const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.email': 'Please provide a valid email address',
+    'any.required': 'Email is required'
+  })
+});
+
+const resetPasswordSchema = Joi.object({
+  newPassword: Joi.string()
+    .min(8)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()])[A-Za-z\d@$!%*?&#^()]{8,}$/)
+    .required()
+    .messages({
+      'string.min': 'Password must be at least 8 characters long',
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      'any.required': 'New password is required'
+    }),
+  accessToken: Joi.string().allow('', null),
+  refreshToken: Joi.string().allow('', null),
+  recoveryToken: Joi.string().allow('', null),
+  email: Joi.string().email().allow('', null)
+}).or('accessToken', 'recoveryToken');
+
 const leaveSchema = Joi.object({
   leaveType: Joi.string().valid('Sick', 'Casual', 'Earned').required().messages({
     'any.only': 'Leave type must be Sick, Casual, or Earned',
@@ -88,6 +111,8 @@ module.exports = {
   validate,
   signupSchema,
   loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   leaveSchema,
   updateProfileSchema,
   leaveStatusSchema

@@ -30,6 +30,17 @@ const login = async (email, password) => {
   return response.data;
 };
 
+
+const forgotPassword = async (email) => {
+  const response = await api.post('/auth/forgot-password', { email });
+  return response.data;
+};
+
+const resetPassword = async (payload) => {
+  const response = await api.post('/auth/reset-password', payload);
+  return response.data;
+};
+
 const logout = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
@@ -63,7 +74,9 @@ const authService = {
   login,
   logout,
   getCurrentUser,
-  updateUserProfile
+  updateUserProfile,
+  forgotPassword,
+  resetPassword
 };
 
 export default authService;

@@ -123,9 +123,9 @@ const Login = () => {
               </Form.Group>
               <div className="text-end mb-3">
                 <small>
-                  <span className="text-muted" style={{ cursor: 'default' }}>
-                    <i className="bi bi-question-circle me-1"></i>Forgot Password? Contact your administrator.
-                  </span>
+                  <Link to="/forgot-password" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '600' }}>
+                    <i className="bi bi-question-circle me-1"></i>Forgot Password? Reset it here
+                  </Link>
                 </small>
               </div>
               <Button className="w-100 mb-3" type="submit" disabled={isSubmitting}>
