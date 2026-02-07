@@ -1,13 +1,13 @@
 import api from './api';
 
 const attendanceService = {
-    checkIn: async (userId) => {
-        const response = await api.post('/attendance/check-in', { userId });
+    checkIn: async () => {
+        const response = await api.post('/attendance/check-in', {});
         return response.data;
     },
 
-    checkOut: async (userId) => {
-        const response = await api.post('/attendance/check-out', { userId });
+    checkOut: async () => {
+        const response = await api.post('/attendance/check-out', {});
         return response.data;
     },
 

@@ -31,7 +31,7 @@ const supabase = createClient(supabaseUrl || '', supabaseServiceKey || '', {
     }
 });
 
-// Test connection on startup
+// Test connection (call explicitly from server.js instead of running as side-effect)
 const testConnection = async () => {
     try {
         const { error } = await supabase.from('profiles').select('id').limit(1);
@@ -45,7 +45,5 @@ const testConnection = async () => {
     }
 };
 
-// Run connection test (non-blocking)
-testConnection();
-
 module.exports = supabase;
+module.exports.testConnection = testConnection;

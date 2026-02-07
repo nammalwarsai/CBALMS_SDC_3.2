@@ -45,6 +45,9 @@ const leaveController = {
 
             const leave = await LeaveModel.createLeave(employeeId, leaveType, startDate, endDate, reason);
 
+            // Attach computed working days so frontend doesn't need to recalculate (CQ-04)
+            leave.working_days = requestedDays;
+
             // Notify all admins about the new leave request
             try {
                 const employeeName = req.user.full_name || req.user.name || 'An employee';
@@ -84,11 +87,28 @@ const leaveController = {
         }
     },
 
-    // Employee: Cancel a pending leave request
+    // Employee: Cancel a leave request (pending or approved)
     async cancelLeave(req, res, next) {
         try {
             const { id } = req.params;
             const employeeId = req.user.id;
+
+            // First, fetch the leave to check its status
+            const existingLeave = await LeaveModel.getLeaveById(id);
+            if (!existingLeave || existingLeave.employee_id !== employeeId) {
+                return res.status(404).json({ error: 'Leave request not found or cannot be cancelled' });
+            }
+
+            if (existingLeave.status !== 'Pending' && existingLeave.status !== 'Approved') {
+                return res.status(400).json({ error: 'Only pending or approved leave requests can be cancelled' });
+            }
+
+            // If the leave was approved, restore the balance before deleting
+            if (existingLeave.status === 'Approved') {
+                const workingDays = calculateWorkingDays(existingLeave.start_date, existingLeave.end_date);
+                const year = new Date(existingLeave.start_date).getFullYear();
+                await LeaveBalanceModel.restoreBalance(employeeId, existingLeave.leave_type, workingDays, year);
+            }
 
             const leave = await LeaveModel.deleteLeave(id, employeeId);
 
@@ -163,6 +183,13 @@ const leaveController = {
             }
 
             const updatedLeave = await LeaveModel.updateLeaveStatus(id, status, adminId, remarks);
+
+            // Deduct leave balance when approved
+            if (status === 'Approved') {
+                const workingDays = calculateWorkingDays(existingLeave.start_date, existingLeave.end_date);
+                const year = new Date(existingLeave.start_date).getFullYear();
+                await LeaveBalanceModel.deductBalance(existingLeave.employee_id, existingLeave.leave_type, workingDays, year);
+            }
 
             // Notify the employee about the decision
             try {

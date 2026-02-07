@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const errorHandler = require('./src/middleware/errorHandler');
+const requestId = require('./src/middleware/requestId');
 const authRoutes = require('./src/routes/authRoutes');
 
 dotenv.config();
@@ -15,8 +16,12 @@ const PORT = process.env.PORT || 5000;
 // Security: HTTP headers
 app.use(helmet());
 
-// Request logging
-app.use(morgan('combined'));
+// Attach unique request ID to every request (CQ-10)
+app.use(requestId);
+
+// Request logging with request ID correlation
+morgan.token('request-id', (req) => req.requestId);
+app.use(morgan(':request-id :method :url :status :response-time ms'));
 
 // Middlewares
 app.use(cors({
@@ -64,6 +69,10 @@ initCronJobs();
 
 // Centralized error handling middleware (must be last)
 app.use(errorHandler);
+
+// Test Supabase connection on startup (non-blocking)
+const { testConnection } = require('./src/config/supabaseClient');
+testConnection();
 
 // Start server
 app.listen(PORT, () => {

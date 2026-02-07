@@ -88,6 +88,44 @@ const LeaveBalanceModel = {
 
         if (error) throw error;
         return data || [];
+    },
+
+    // Deduct leave balance when a leave is approved
+    async deductBalance(employeeId, leaveType, days, year = new Date().getFullYear()) {
+        const balance = await this.getBalance(employeeId, leaveType, year);
+        if (!balance) throw new Error(`No leave balance found for type ${leaveType}`);
+
+        const newUsed = balance.used_days + days;
+        const newRemaining = balance.total_days - newUsed;
+
+        const { data, error } = await supabase
+            .from('leave_balances')
+            .update({ used_days: newUsed, remaining_days: newRemaining })
+            .eq('id', balance.id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    // Restore leave balance when an approved leave is cancelled
+    async restoreBalance(employeeId, leaveType, days, year = new Date().getFullYear()) {
+        const balance = await this.getBalance(employeeId, leaveType, year);
+        if (!balance) throw new Error(`No leave balance found for type ${leaveType}`);
+
+        const newUsed = Math.max(0, balance.used_days - days);
+        const newRemaining = balance.total_days - newUsed;
+
+        const { data, error } = await supabase
+            .from('leave_balances')
+            .update({ used_days: newUsed, remaining_days: newRemaining })
+            .eq('id', balance.id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     }
 };
 

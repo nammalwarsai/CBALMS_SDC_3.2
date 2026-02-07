@@ -1,10 +1,11 @@
+import { useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
 /**
- * Custom hook providing toast notification methods
+ * Custom hook providing memoized toast notification methods (CQ-06)
  */
 const useToast = () => {
-  const success = (message) => {
+  const success = useCallback((message) => {
     toast.success(message, {
       position: 'top-right',
       autoClose: 3000,
@@ -13,9 +14,9 @@ const useToast = () => {
       pauseOnHover: true,
       draggable: true,
     });
-  };
+  }, []);
 
-  const error = (message) => {
+  const error = useCallback((message) => {
     toast.error(message, {
       position: 'top-right',
       autoClose: 4000,
@@ -24,9 +25,9 @@ const useToast = () => {
       pauseOnHover: true,
       draggable: true,
     });
-  };
+  }, []);
 
-  const warning = (message) => {
+  const warning = useCallback((message) => {
     toast.warning(message, {
       position: 'top-right',
       autoClose: 3500,
@@ -35,9 +36,9 @@ const useToast = () => {
       pauseOnHover: true,
       draggable: true,
     });
-  };
+  }, []);
 
-  const info = (message) => {
+  const info = useCallback((message) => {
     toast.info(message, {
       position: 'top-right',
       autoClose: 3000,
@@ -46,9 +47,9 @@ const useToast = () => {
       pauseOnHover: true,
       draggable: true,
     });
-  };
+  }, []);
 
-  return { success, error, warning, info };
+  return useMemo(() => ({ success, error, warning, info }), [success, error, warning, info]);
 };
 
 export default useToast;

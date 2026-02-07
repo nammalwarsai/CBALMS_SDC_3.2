@@ -123,14 +123,14 @@ const LeaveModel = {
         return count || 0;
     },
 
-    // Delete a leave request (only if pending)
+    // Delete a leave request (pending or approved)
     async deleteLeave(leaveId, employeeId) {
         const { data, error } = await supabase
             .from('leaves')
             .delete()
             .eq('id', leaveId)
             .eq('employee_id', employeeId)
-            .eq('status', 'Pending')
+            .in('status', ['Pending', 'Approved'])
             .select()
             .single();
 

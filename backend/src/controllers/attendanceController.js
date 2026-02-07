@@ -95,6 +95,12 @@ const attendanceController = {
     async getHistory(req, res, next) {
         try {
             const { userId } = req.params;
+
+            // Authorization: only allow users to access their own data, or admins
+            if (req.user.id !== userId && req.user.role !== 'admin') {
+                return res.status(403).json({ error: 'Access denied. You can only view your own attendance history.' });
+            }
+
             const page = parseInt(req.query.page) || 1;
             const limit = Math.min(parseInt(req.query.limit) || 50, 100);
 
@@ -111,6 +117,12 @@ const attendanceController = {
     async getStatus(req, res, next) {
         try {
             const { userId } = req.params;
+
+            // Authorization: only allow users to access their own data, or admins
+            if (req.user.id !== userId && req.user.role !== 'admin') {
+                return res.status(403).json({ error: 'Access denied. You can only view your own attendance status.' });
+            }
+
             const today = new Date().toISOString().split('T')[0];
 
             const record = await AttendanceModel.getAttendanceByDate(userId, today);

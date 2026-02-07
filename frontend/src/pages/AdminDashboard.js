@@ -9,8 +9,10 @@ import attendanceService from '../services/attendanceService';
 import leaveService from '../services/leaveService';
 import Sidebar from '../components/layout/Sidebar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
-import { StatCardSkeleton, TableRowSkeleton } from '../components/common/SkeletonLoaders';
+import AdminStatsCards from '../components/admin/AdminStatsCards';
+import EmployeeTable from '../components/admin/EmployeeTable';
 import useToast from '../hooks/useToast';
+import { formatDate } from '../utils/dateUtils';
 import { getGreeting, arrayToCSV, downloadCSV } from '../utils/helpers';
 
 const AdminDashboard = () => {
@@ -39,6 +41,7 @@ const AdminDashboard = () => {
   const [showAttendanceListModal, setShowAttendanceListModal] = useState(false);
   const [attendanceListType, setAttendanceListType] = useState('');
   const [attendanceListData, setAttendanceListData] = useState([]);
+  const [attendanceListLoading, setAttendanceListLoading] = useState(false);
   
   // Leave management states
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -110,14 +113,19 @@ const AdminDashboard = () => {
   };
 
   const handleStatCardClick = async (type) => {
+    // UI-05: Show modal immediately with loading spinner
+    setAttendanceListType(type);
+    setAttendanceListData([]);
+    setAttendanceListLoading(true);
+    setShowAttendanceListModal(true);
     try {
       const response = await adminService.getAttendanceList(type);
       setAttendanceListData(response.data || []);
-      setAttendanceListType(type);
-      setShowAttendanceListModal(true);
     } catch (error) {
       console.error(`Error fetching ${type} employees`, error);
       toast.error(`Failed to fetch ${type} employees`);
+    } finally {
+      setAttendanceListLoading(false);
     }
   };
 
@@ -348,138 +356,23 @@ const AdminDashboard = () => {
           </Card>
 
           {/* Stats Row */}
-          <Row className="mb-4">
-            <Col md={6} lg={3} className="mb-3">
-              {loading ? <StatCardSkeleton /> : (
-              <Card className="stat-card text-center" style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)', color: 'white' }}>
-                <Card.Body>
-                  <div className="mb-2"><i className="bi bi-people-fill" style={{ fontSize: '1.5rem' }}></i></div>
-                  <h3>{dashboardStats.totalEmployees}</h3>
-                  <Card.Text>Total Employees</Card.Text>
-                </Card.Body>
-              </Card>
-              )}
-            </Col>
-        <Col md={6} lg={3} className="mb-3">
-          <Card 
-            className="stat-card text-center" 
-            style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', cursor: 'pointer' }}
-            onClick={() => handleStatCardClick('present')}
-            role="button"
-            aria-label={`Present Today: ${dashboardStats.presentToday}. Click to view list`}
-          >
-            <Card.Body>
-              <div className="mb-2"><i className="bi bi-check-circle" style={{ fontSize: '1.5rem' }}></i></div>
-              <h3>{dashboardStats.presentToday}</h3>
-              <Card.Text>Present Today</Card.Text>
-              <small style={{ opacity: 0.8 }}>Click to view list</small>
-            </Card.Body>
-          </Card>
-            </Col>
-            <Col md={6} lg={3} className="mb-3">
-          <Card 
-            className="stat-card text-center" 
-            style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white', cursor: 'pointer' }}
-            onClick={handleOpenTodayLeavesModal}
-            role="button"
-            aria-label={`On Leave: ${dashboardStats.onLeave}. Click to view list`}
-          >
-            <Card.Body>
-              <div className="mb-2"><i className="bi bi-calendar-x" style={{ fontSize: '1.5rem' }}></i></div>
-              <h3>{dashboardStats.onLeave}</h3>
-              <Card.Text>On Leave</Card.Text>
-              <small style={{ opacity: 0.8 }}>Click to view list</small>
-            </Card.Body>
-          </Card>
-            </Col>
-            <Col md={6} lg={3} className="mb-3">
-          <Card 
-            className="stat-card text-center" 
-            style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', color: 'white', cursor: 'pointer' }}
-            onClick={() => handleStatCardClick('absent')}
-            role="button"
-            aria-label={`Absent Today: ${dashboardStats.absentToday}. Click to view list`}
-          >
-            <Card.Body>
-              <div className="mb-2"><i className="bi bi-x-circle" style={{ fontSize: '1.5rem' }}></i></div>
-              <h3>{dashboardStats.absentToday}</h3>
-              <Card.Text>Absent Today</Card.Text>
-              <small style={{ opacity: 0.8 }}>Click to view list</small>
-            </Card.Body>
-          </Card>
-            </Col>
-          </Row>
+          <AdminStatsCards
+            loading={loading}
+            dashboardStats={dashboardStats}
+            onStatCardClick={handleStatCardClick}
+            onOpenTodayLeavesModal={handleOpenTodayLeavesModal}
+          />
 
       {/* Employee List Table */}
       <Row className="mb-4">
         <Col>
-          <Card className="content-card">
-            <Card.Header className="d-flex justify-content-between align-items-center flex-wrap">
-              <strong><i className="bi bi-people me-2"></i>All Employees</strong>
-              <div className="d-flex gap-2 align-items-center mt-2 mt-md-0">
-                <Button variant="outline-success" size="sm" onClick={exportEmployeesCSV} aria-label="Export Employees CSV">
-                  <i className="bi bi-filetype-csv me-1"></i>CSV
-                </Button>
-                <Button variant="outline-primary" size="sm" onClick={() => downloadReport('daily')} aria-label="Download Daily Report">
-                  <i className="bi bi-file-pdf me-1"></i>Daily
-                </Button>
-                <Button variant="outline-info" size="sm" onClick={() => downloadReport('monthly')} aria-label="Download Monthly Report">
-                  <i className="bi bi-file-pdf me-1"></i>Monthly
-                </Button>
-                <span className="badge bg-primary ms-2">{employees.length} Total</span>
-              </div>
-            </Card.Header>
-            <Card.Body>
-              {loading ? (
-                <Table striped bordered hover responsive>
-                  <thead><tr><th>Name</th><th>Department</th><th>Employee ID</th><th>Mobile</th><th>Status</th><th>Action</th></tr></thead>
-                  <tbody><TableRowSkeleton columns={6} rows={5} /></tbody>
-                </Table>
-              ) : (
-                <Table striped bordered hover responsive>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Department</th>
-                      <th>Employee ID</th>
-                      <th>Mobile</th>
-                      <th>Current Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {employees.length === 0 ? (
-                      <tr><td colSpan="6" className="text-center text-muted py-4"><i className="bi bi-inbox me-2"></i>No employees found</td></tr>
-                    ) : (
-                      employees.map((emp) => (
-                        <tr key={emp.id}>
-                          <td><strong>{emp.full_name}</strong></td>
-                          <td>{emp.department}</td>
-                          <td>{emp.employee_id}</td>
-                          <td>{emp.mobile_number}</td>
-                          <td>
-                            <Badge bg={emp.present_status_of_employee === 'Present' ? 'success' : 'secondary'}>
-                              {emp.present_status_of_employee || 'Absent'}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Button
-                              size="sm"
-                              variant="info"
-                              onClick={() => handleViewDetails(emp.id)}
-                              aria-label={`View details for ${emp.full_name}`}
-                            >
-                              <i className="bi bi-eye me-1"></i>Details
-                            </Button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </Table>
-              )}
-            </Card.Body>
-          </Card>
+          <EmployeeTable
+            employees={employees}
+            loading={loading}
+            onViewDetails={handleViewDetails}
+            onExportCSV={exportEmployeesCSV}
+            onDownloadReport={downloadReport}
+          />
         </Col>
       </Row>
 
@@ -537,7 +430,7 @@ const AdminDashboard = () => {
                       {selectedEmployee.recentAttendance && selectedEmployee.recentAttendance.length > 0 ? (
                         selectedEmployee.recentAttendance.map((rec, idx) => (
                           <tr key={idx}>
-                            <td>{rec.date}</td>
+                            <td>{formatDate(rec.date)}</td>
                             <td>{rec.check_in || '-'}</td>
                             <td>{rec.check_out || '-'}</td>
                             <td>
@@ -585,7 +478,12 @@ const AdminDashboard = () => {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {attendanceListData.length === 0 ? (
+          {attendanceListLoading ? (
+            <div className="text-center py-5">
+              <Spinner animation="border" variant="primary" />
+              <p className="text-muted mt-3">Loading {attendanceListType} employees...</p>
+            </div>
+          ) : attendanceListData.length === 0 ? (
             <div className="text-center py-5">
               <p className="text-muted">
                 {attendanceListType === 'present' 
@@ -690,8 +588,8 @@ const AdminDashboard = () => {
                     </td>
                     <td>{leave.profiles?.department || '-'}</td>
                     <td><Badge bg="info">{leave.leave_type}</Badge></td>
-                    <td>{leave.start_date}</td>
-                    <td>{leave.end_date}</td>
+                    <td>{formatDate(leave.start_date)}</td>
+                    <td>{formatDate(leave.end_date)}</td>
                     <td style={{ maxWidth: '200px' }}>
                       <small>{leave.reason || '-'}</small>
                     </td>
@@ -791,7 +689,7 @@ const AdminDashboard = () => {
                     <td>{leave.profiles?.department || '-'}</td>
                     <td><Badge bg="warning" text="dark">{leave.leave_type}</Badge></td>
                     <td>
-                      {leave.start_date} to {leave.end_date}
+                      {formatDate(leave.start_date)} to {formatDate(leave.end_date)}
                     </td>
                     <td style={{ maxWidth: '250px' }}>
                       <small>{leave.reason || '-'}</small>

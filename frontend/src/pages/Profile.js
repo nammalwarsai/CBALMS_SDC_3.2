@@ -213,12 +213,15 @@ const Profile = () => {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label><i className="bi bi-envelope me-1"></i>Email Address</Form.Label>
+                      <Form.Label><i className="bi bi-envelope me-1"></i>Email Address <Badge bg="secondary" className="ms-1" style={{ fontSize: '0.65rem' }}>Non-editable</Badge></Form.Label>
                       <Form.Control
                         type="email"
                         name="email"
                         value={profileData.email}
-                        disabled
+                        readOnly
+                        plaintext={!isEditing ? false : undefined}
+                        disabled={!isEditing}
+                        style={isEditing ? { backgroundColor: '#f0f0f0', cursor: 'not-allowed', border: '1px solid #dee2e6' } : {}}
                         aria-label="Email Address"
                       />
                     </Form.Group>
@@ -242,12 +245,14 @@ const Profile = () => {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label><i className="bi bi-hash me-1"></i>Employee ID</Form.Label>
+                      <Form.Label><i className="bi bi-hash me-1"></i>Employee ID <Badge bg="secondary" className="ms-1" style={{ fontSize: '0.65rem' }}>Non-editable</Badge></Form.Label>
                       <Form.Control
                         type="text"
                         name="employeeId"
                         value={profileData.employeeId}
-                        disabled
+                        readOnly
+                        disabled={!isEditing}
+                        style={isEditing ? { backgroundColor: '#f0f0f0', cursor: 'not-allowed', border: '1px solid #dee2e6' } : {}}
                         aria-label="Employee ID"
                       />
                     </Form.Group>
@@ -257,24 +262,27 @@ const Profile = () => {
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label><i className="bi bi-building me-1"></i>Department</Form.Label>
+                      <Form.Label><i className="bi bi-building me-1"></i>Department <Badge bg="secondary" className="ms-1" style={{ fontSize: '0.65rem' }}>Non-editable</Badge></Form.Label>
                       <Form.Control
                         type="text"
                         name="department"
                         value={profileData.department}
-                        onChange={handleChange}
-                        disabled
+                        readOnly
+                        disabled={!isEditing}
+                        style={isEditing ? { backgroundColor: '#f0f0f0', cursor: 'not-allowed', border: '1px solid #dee2e6' } : {}}
                         aria-label="Department"
                       />
                     </Form.Group>
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label><i className="bi bi-shield me-1"></i>Role</Form.Label>
+                      <Form.Label><i className="bi bi-shield me-1"></i>Role <Badge bg="secondary" className="ms-1" style={{ fontSize: '0.65rem' }}>Non-editable</Badge></Form.Label>
                       <Form.Control
                         type="text"
                         value={profileData.role === 'admin' ? 'Administrator' : 'Employee'}
-                        disabled
+                        readOnly
+                        disabled={!isEditing}
+                        style={isEditing ? { backgroundColor: '#f0f0f0', cursor: 'not-allowed', border: '1px solid #dee2e6' } : {}}
                         aria-label="Role"
                       />
                     </Form.Group>

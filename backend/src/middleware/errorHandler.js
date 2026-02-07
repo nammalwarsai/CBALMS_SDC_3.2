@@ -1,11 +1,12 @@
 // Centralized Error Handling Middleware
 const errorHandler = (err, req, res, next) => {
-    // Log the error
-    console.error(`[${new Date().toISOString()}] Error:`, {
+    // Log the error with request ID for correlation (CQ-10)
+    console.error(`[${new Date().toISOString()}] [${req.requestId || 'no-id'}] Error:`, {
         message: err.message,
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
         path: req.path,
-        method: req.method
+        method: req.method,
+        requestId: req.requestId
     });
 
     // Supabase errors
@@ -35,7 +36,8 @@ const errorHandler = (err, req, res, next) => {
     res.status(500).json({
         error: process.env.NODE_ENV === 'development'
             ? err.message
-            : 'An unexpected error occurred. Please try again later.'
+            : 'An unexpected error occurred. Please try again later.',
+        requestId: req.requestId
     });
 };
 

@@ -112,11 +112,12 @@ const AttendanceModel = {
         const now = new Date();
         const checkoutTime = '06:00:00 PM';
 
-        // Fetch all records where check_out is NULL
+        // Only fetch open records up to today (date guard to avoid scanning entire history)
         const { data: openRecords, error } = await supabase
             .from('attendance')
             .select('*')
-            .is('check_out', null);
+            .is('check_out', null)
+            .lte('date', today);
 
         if (error) {
             console.error("Error fetching open attendance records:", error);
@@ -125,7 +126,9 @@ const AttendanceModel = {
 
         if (!openRecords || openRecords.length === 0) return { message: "No open records found." };
 
-        const updates = [];
+        let successCount = 0;
+        const errors = [];
+
         for (const record of openRecords) {
             const recordDate = record.date;
             let shouldCheckout = false;
@@ -140,30 +143,34 @@ const AttendanceModel = {
             }
 
             if (shouldCheckout) {
-                const updateAttendance = supabase
-                    .from('attendance')
-                    .update({
-                        check_out: checkoutTime,
-                        status: 'Present'
-                    })
-                    .eq('id', record.id);
+                try {
+                    const { error: attError } = await supabase
+                        .from('attendance')
+                        .update({
+                            check_out: checkoutTime,
+                            status: 'Present'
+                        })
+                        .eq('id', record.id);
 
-                const updateProfile = supabase
-                    .from('profiles')
-                    .update({ present_status_of_employee: 'Absent' })
-                    .eq('id', record.employee_id);
+                    if (attError) throw attError;
 
-                updates.push(updateAttendance);
-                updates.push(updateProfile);
+                    const { error: profError } = await supabase
+                        .from('profiles')
+                        .update({ present_status_of_employee: 'Absent' })
+                        .eq('id', record.employee_id);
+
+                    if (profError) throw profError;
+
+                    successCount++;
+                } catch (updateError) {
+                    console.error(`Auto-checkout failed for record ${record.id} (employee ${record.employee_id}):`, updateError);
+                    errors.push({ recordId: record.id, employeeId: record.employee_id, error: updateError.message });
+                }
             }
         }
 
-        if (updates.length > 0) {
-            await Promise.all(updates);
-            return { message: `Auto-checked out ${updates.length / 2} employees.` };
-        } else {
-            return { message: "No employees needed auto-checkout." };
-        }
+        const message = `Auto-checked out ${successCount} employees.${errors.length > 0 ? ` ${errors.length} failed.` : ''}`;
+        return { message, errors: errors.length > 0 ? errors : undefined };
     }
 };
 
