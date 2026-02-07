@@ -1,8 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Form, Button, Alert, Card, InputGroup, Spinner } from 'react-bootstrap';
 import useToast from '../hooks/useToast';
 import authService from '../services/authService';
+
+const readHashParams = () => {
+  const hash = window.location.hash?.startsWith('#')
+    ? window.location.hash.slice(1)
+    : window.location.hash || '';
+
+  return new URLSearchParams(hash);
+};
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -17,16 +25,38 @@ const ResetPassword = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const accessToken = searchParams.get('access_token') || '';
-  const refreshToken = searchParams.get('refresh_token') || '';
-  const recoveryToken = searchParams.get('token') || '';
-  const email = searchParams.get('email') || '';
+  const tokenData = useMemo(() => {
+    const hashParams = readHashParams();
+    const accessToken = searchParams.get('access_token') || hashParams.get('access_token') || '';
+    const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token') || '';
+    const recoveryToken = searchParams.get('token') || hashParams.get('token') || '';
+    const email = searchParams.get('email') || hashParams.get('email') || '';
+    const hashError = hashParams.get('error_description') || hashParams.get('error') || '';
+
+    return {
+      accessToken,
+      refreshToken,
+      recoveryToken,
+      email,
+      hashError
+    };
+  }, [searchParams]);
 
   useEffect(() => {
-    if (!accessToken && !recoveryToken) {
-      setError('Invalid or missing reset token. Please request a new password reset link.');
+    if (tokenData.hashError) {
+      setError(decodeURIComponent(tokenData.hashError));
+      return;
     }
-  }, [accessToken, recoveryToken]);
+
+    if (!tokenData.accessToken && !tokenData.recoveryToken) {
+      setError('Invalid or missing reset token. Please request a new password reset link.');
+      return;
+    }
+
+    if (window.location.hash) {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    }
+  }, [tokenData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,15 +73,14 @@ const ResetPassword = () => {
     try {
       setIsSubmitting(true);
 
-      const payload = {
+      const response = await authService.resetPassword({
         newPassword,
-        accessToken,
-        refreshToken,
-        recoveryToken,
-        email
-      };
+        accessToken: tokenData.accessToken,
+        refreshToken: tokenData.refreshToken,
+        recoveryToken: tokenData.recoveryToken,
+        email: tokenData.email
+      });
 
-      const response = await authService.resetPassword(payload);
       const message = response.message || 'Your password has been reset successfully.';
       setSuccessMessage(message);
       toast.success(message);
@@ -146,7 +175,11 @@ const ResetPassword = () => {
                 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
               </Form.Text>
 
-              <Button className="w-100 mb-3" type="submit" disabled={isSubmitting || (!accessToken && !recoveryToken)}>
+              <Button
+                className="w-100 mb-3"
+                type="submit"
+                disabled={isSubmitting || (!tokenData.accessToken && !tokenData.recoveryToken)}
+              >
                 {isSubmitting ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />

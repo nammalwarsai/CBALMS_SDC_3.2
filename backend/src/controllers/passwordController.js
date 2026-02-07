@@ -22,21 +22,18 @@ const passwordController = {
 
   async resetPassword(req, res, next) {
     try {
-      const { newPassword, accessToken, refreshToken, recoveryToken, email } = req.body;
+      const { newPassword, accessToken, recoveryToken, email } = req.body;
 
       let userId;
 
-      if (accessToken && refreshToken) {
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
+      if (accessToken) {
+        const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
 
-        if (sessionError || !sessionData?.user) {
-          return res.status(400).json({ error: sessionError?.message || 'Invalid or expired reset session' });
+        if (userError || !userData?.user) {
+          return res.status(400).json({ error: userError?.message || 'Invalid or expired reset session' });
         }
 
-        userId = sessionData.user.id;
+        userId = userData.user.id;
       } else if (recoveryToken && email) {
         const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
           email,
