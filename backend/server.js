@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const errorHandler = require('./src/middleware/errorHandler');
 const requestId = require('./src/middleware/requestId');
 const authRoutes = require('./src/routes/authRoutes');
+const passwordRoutes = require('./src/routes/passwordRoutes');
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authLimiter, passwordRoutes);
 app.use('/api/attendance', require('./src/routes/attendanceRoutes'));
 app.use('/api/admin', require('./src/routes/adminRoutes'));
 app.use('/api/leaves', require('./src/routes/leaveRoutes'));
