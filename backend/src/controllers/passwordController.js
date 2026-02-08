@@ -22,39 +22,26 @@ const passwordController = {
 
   async resetPassword(req, res, next) {
     try {
-      const { newPassword, accessToken, refreshToken, recoveryToken, email } = req.body;
+      const { newPassword, accessToken } = req.body;
 
-      let userId;
-
-      if (accessToken && refreshToken) {
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
-
-        if (sessionError || !sessionData?.user) {
-          return res.status(400).json({ error: sessionError?.message || 'Invalid or expired reset session' });
-        }
-
-        userId = sessionData.user.id;
-      } else if (recoveryToken && email) {
-        const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
-          email,
-          token: recoveryToken,
-          type: 'recovery'
-        });
-
-        if (otpError || !otpData?.user) {
-          return res.status(400).json({ error: otpError?.message || 'Invalid or expired recovery token' });
-        }
-
-        userId = otpData.user.id;
-      } else {
+      if (!accessToken) {
         return res.status(400).json({
-          error: 'A valid recovery token/session is required to reset password'
+          error: 'A valid access token is required to reset password'
         });
       }
 
+      // Verify the access token and get user info using admin-level getUser
+      const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
+
+      if (userError || !userData?.user) {
+        return res.status(400).json({ 
+          error: 'Invalid or expired reset link. Please request a new password reset link.' 
+        });
+      }
+
+      const userId = userData.user.id;
+
+      // Update password using admin API
       const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
         password: newPassword
       });

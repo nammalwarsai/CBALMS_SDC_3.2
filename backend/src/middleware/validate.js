@@ -65,11 +65,10 @@ const resetPasswordSchema = Joi.object({
       'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
       'any.required': 'New password is required'
     }),
-  accessToken: Joi.string().allow('', null),
-  refreshToken: Joi.string().allow('', null),
-  recoveryToken: Joi.string().allow('', null),
-  email: Joi.string().email().allow('', null)
-}).or('accessToken', 'recoveryToken');
+  accessToken: Joi.string().required().messages({
+    'any.required': 'Access token is required'
+  })
+});
 
 const leaveSchema = Joi.object({
   leaveType: Joi.string().valid('Sick', 'Casual', 'Earned').required().messages({

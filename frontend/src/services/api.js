@@ -9,12 +9,18 @@ const api = axios.create({
   },
 });
 
+// Public endpoints that should NOT include the auth token
+const publicEndpoints = ['/auth/forgot-password', '/auth/reset-password', '/auth/login', '/auth/signup'];
+
 // Add a request interceptor to attach the token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
+    if (!isPublic) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
