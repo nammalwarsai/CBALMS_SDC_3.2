@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Form, Button, Alert, Card, Spinner } from 'react-bootstrap';
 import { isValidEmail } from '../utils/validators';
 import useToast from '../hooks/useToast';
-import authService from '../services/authService';
+import supabase from '../config/supabaseClient';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -38,12 +38,24 @@ const ForgotPassword = () => {
 
     try {
       setIsSubmitting(true);
-      const response = await authService.forgotPassword(email);
-      const message = response.message || 'Password reset email sent. Please check your inbox.';
+
+      // Call Supabase directly from the frontend so that the PKCE
+      // code verifier is stored in the browser's localStorage.
+      // This ensures the code exchange works when the user clicks
+      // the recovery link and lands on the ResetPassword page.
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+
+      if (resetError) {
+        throw resetError;
+      }
+
+      const message = 'If an account exists for this email, a password reset link has been sent. Please check your inbox.';
       setSuccessMessage(message);
       toast.success(message);
     } catch (err) {
-      const errorMsg = err.response?.data?.error || err.message || 'Unable to process request';
+      const errorMsg = err.message || 'Unable to process request';
       setError(errorMsg);
       toast.error(errorMsg);
     } finally {
