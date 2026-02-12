@@ -1,4 +1,5 @@
 const AttendanceModel = require('../models/attendanceModel');
+const HolidayModel = require('../models/holidayModel');
 
 // Standardized time formatting with explicit timezone
 const formatTime = (date) => {
@@ -24,6 +25,12 @@ const attendanceController = {
             const dayOfWeek = now.getDay();
             if (dayOfWeek === 0 || dayOfWeek === 6) {
                 return res.status(400).json({ error: 'Cannot check in on weekends (Saturday/Sunday).' });
+            }
+
+            // Check for Holiday restriction
+            const isHoliday = await HolidayModel.isHoliday(today);
+            if (isHoliday) {
+                return res.status(400).json({ error: 'Cannot check in on a public holiday.' });
             }
 
             // Check if already checked in today

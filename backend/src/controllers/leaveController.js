@@ -1,15 +1,17 @@
 const LeaveModel = require('../models/leaveModel');
 const LeaveBalanceModel = require('../models/leaveBalanceModel');
 const NotificationModel = require('../models/notificationModel');
+const HolidayModel = require('../models/holidayModel');
 
-// Helper: calculate working days between two dates
-const calculateWorkingDays = (startDate, endDate) => {
+// Helper: calculate working days between two dates (excluding weekends and holidays)
+const calculateWorkingDays = (startDate, endDate, holidayDatesSet = new Set()) => {
     let count = 0;
     const current = new Date(startDate);
     const end = new Date(endDate);
     while (current <= end) {
         const day = current.getDay();
-        if (day !== 0 && day !== 6) count++;
+        const dateStr = current.toISOString().split('T')[0];
+        if (day !== 0 && day !== 6 && !holidayDatesSet.has(dateStr)) count++;
         current.setDate(current.getDate() + 1);
     }
     return count;
@@ -30,9 +32,26 @@ const leaveController = {
                 return res.status(400).json({ error: 'End date must be after or equal to start date' });
             }
 
+            // Reject cross-year leave requests
+            const startYear = new Date(startDate).getFullYear();
+            const endYear = new Date(endDate).getFullYear();
+            if (startYear !== endYear) {
+                return res.status(400).json({
+                    error: 'Leave requests cannot span across years. Please submit separate requests for each year.'
+                });
+            }
+
+            // Fetch holidays in the leave range for accurate working day calculation
+            const holidayDatesSet = await HolidayModel.getHolidayDatesInRange(startDate, endDate);
+
             // Check leave balance before creating request
-            const requestedDays = calculateWorkingDays(startDate, endDate);
-            const year = new Date(startDate).getFullYear();
+            const requestedDays = calculateWorkingDays(startDate, endDate, holidayDatesSet);
+
+            if (requestedDays === 0) {
+                return res.status(400).json({ error: 'The selected date range has no working days (all weekends/holidays).' });
+            }
+
+            const year = startYear;
             const hasSufficient = await LeaveBalanceModel.hasSufficientBalance(employeeId, leaveType, requestedDays, year);
 
             if (!hasSufficient) {
@@ -105,7 +124,8 @@ const leaveController = {
 
             // If the leave was approved, restore the balance before deleting
             if (existingLeave.status === 'Approved') {
-                const workingDays = calculateWorkingDays(existingLeave.start_date, existingLeave.end_date);
+                const holidayDatesSet = await HolidayModel.getHolidayDatesInRange(existingLeave.start_date, existingLeave.end_date);
+                const workingDays = calculateWorkingDays(existingLeave.start_date, existingLeave.end_date, holidayDatesSet);
                 const year = new Date(existingLeave.start_date).getFullYear();
                 await LeaveBalanceModel.restoreBalance(employeeId, existingLeave.leave_type, workingDays, year);
             }
@@ -186,7 +206,8 @@ const leaveController = {
 
             // Deduct leave balance when approved
             if (status === 'Approved') {
-                const workingDays = calculateWorkingDays(existingLeave.start_date, existingLeave.end_date);
+                const holidayDatesSet = await HolidayModel.getHolidayDatesInRange(existingLeave.start_date, existingLeave.end_date);
+                const workingDays = calculateWorkingDays(existingLeave.start_date, existingLeave.end_date, holidayDatesSet);
                 const year = new Date(existingLeave.start_date).getFullYear();
                 await LeaveBalanceModel.deductBalance(existingLeave.employee_id, existingLeave.leave_type, workingDays, year);
             }

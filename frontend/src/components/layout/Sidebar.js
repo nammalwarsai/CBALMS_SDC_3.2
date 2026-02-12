@@ -97,6 +97,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
 
   const adminLinks = [
     { path: '/admin-dashboard', icon: 'bi-speedometer2', label: 'Dashboard' },
+    { path: '/holidays', icon: 'bi-calendar-heart', label: 'Holidays' },
     { path: '/profile', icon: 'bi-person', label: 'My Profile' },
   ];
 

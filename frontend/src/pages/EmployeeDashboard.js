@@ -1,18 +1,16 @@
-import React, { useContext, useState, useEffect, useMemo } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import React, { useContext, useState, useEffect, useMemo, Suspense } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Container, Row, Col, Card, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Table, Badge, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import attendanceService from '../services/attendanceService';
 import leaveService from '../services/leaveService';
 import leaveBalanceService from '../services/leaveBalanceService';
+import holidayService from '../services/holidayService';
 import CalendarComponent from '../components/CalendarComponent';
 import Sidebar from '../components/layout/Sidebar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import BackToTop from '../components/common/BackToTop';
 import AttendanceStatsCards from '../components/employee/AttendanceStatsCards';
-import ChartSection from '../components/employee/ChartSection';
 import LeaveApplicationForm from '../components/employee/LeaveApplicationForm';
 import LeaveHistoryTable from '../components/employee/LeaveHistoryTable';
 import AttendanceHistoryTable from '../components/employee/AttendanceHistoryTable';
@@ -20,6 +18,9 @@ import useAttendanceStatus from '../hooks/useAttendanceStatus';
 import useToast from '../hooks/useToast';
 import { calculateWorkingDays } from '../utils/dateUtils';
 import { getGreeting, arrayToCSV, downloadCSV } from '../utils/helpers';
+
+// Lazy-load ChartSection (contains heavy recharts dependency)
+const ChartSection = React.lazy(() => import('../components/employee/ChartSection'));
 
 const EmployeeDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -38,6 +39,7 @@ const EmployeeDashboard = () => {
     reason: ''
   });
   const [serverLeaveBalances, setServerLeaveBalances] = useState(null);
+  const [holidays, setHolidays] = useState([]);
 
   // Confirm dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -54,6 +56,7 @@ const EmployeeDashboard = () => {
       fetchAttendanceData();
       fetchLeaveHistory();
       fetchServerLeaveBalances();
+      fetchHolidays();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -67,6 +70,16 @@ const EmployeeDashboard = () => {
     } catch (error) {
       console.error("Error fetching server leave balances", error);
       // Fall back to local calculation
+    }
+  };
+
+  const fetchHolidays = async () => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const response = await holidayService.getHolidays(currentYear);
+      setHolidays(response.data || []);
+    } catch (error) {
+      console.error("Error fetching holidays", error);
     }
   };
 
@@ -286,7 +299,13 @@ const EmployeeDashboard = () => {
     setLeaveForm({ ...leaveForm, [e.target.name]: e.target.value });
   };
 
-  const generateAttendancePDF = () => {
+  const generateAttendancePDF = async () => {
+    // Lazy-load jsPDF and autotable to reduce initial bundle size
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable')
+    ]);
+
     const doc = new jsPDF();
     doc.text(`${user ? user.name : 'Employee'} - Attendance Report`, 14, 15);
     doc.setFontSize(10);
@@ -387,8 +406,10 @@ const EmployeeDashboard = () => {
             daysAbsent={daysAbsent}
           />
 
-          {/* Charts Section */}
-          <ChartSection leaveUsageData={leaveUsageData} monthlyAttendanceData={monthlyAttendanceData} />
+          {/* Charts Section - lazy loaded */}
+          <Suspense fallback={<div className="text-center py-4"><Spinner animation="border" variant="primary" /><p className="text-muted mt-2">Loading charts...</p></div>}>
+            <ChartSection leaveUsageData={leaveUsageData} monthlyAttendanceData={monthlyAttendanceData} />
+          </Suspense>
 
           {/* Leave Form and History */}
           <Row>
@@ -428,6 +449,128 @@ const EmployeeDashboard = () => {
                 onExportCSV={exportAttendanceCSV}
                 onGeneratePDF={generateAttendancePDF}
               />
+            </Col>
+          </Row>
+
+          {/* Public Holidays Section */}
+          <Row className="mb-4">
+            <Col>
+              <Card className="content-card">
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <i className="bi bi-calendar-heart me-2"></i>
+                    <strong>Public Holidays - {new Date().getFullYear()}</strong>
+                  </div>
+                  <Badge bg="primary" pill>{holidays.filter(h => h.type !== 'bonus').length} holidays</Badge>
+                </Card.Header>
+                <Card.Body>
+                  {(() => {
+                    const publicHolidays = holidays.filter(h => h.type !== 'bonus');
+                    if (publicHolidays.length === 0) {
+                      return (
+                        <p className="text-muted text-center mb-0">
+                          <i className="bi bi-info-circle me-2"></i>No public holidays configured for this year.
+                        </p>
+                      );
+                    }
+                    return (
+                      <Table striped bordered hover responsive size="sm">
+                        <thead>
+                          <tr>
+                            <th style={{ width: '40px' }}>#</th>
+                            <th>Holiday Name</th>
+                            <th>Date</th>
+                            <th>Day</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {publicHolidays.map((holiday, index) => {
+                            const d = new Date(holiday.date + 'T00:00:00');
+                            const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const isPast = d < today;
+                            const isToday = d.getTime() === today.getTime();
+                            return (
+                              <tr key={holiday.id} className={isToday ? 'table-success' : isPast ? 'text-muted' : ''}>
+                                <td>{index + 1}</td>
+                                <td>
+                                  <strong>{holiday.name}</strong>
+                                  {isToday && <Badge bg="success" className="ms-2">Today</Badge>}
+                                </td>
+                                <td>{d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                                <td><Badge bg={isPast ? 'secondary' : 'info'}>{dayName}</Badge></td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </Table>
+                    );
+                  })()}
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Bonus Holidays Section */}
+          {holidays.filter(h => h.type === 'bonus').length > 0 && (
+            <Row className="mb-4">
+              <Col>
+                <Card className="content-card">
+                  <Card.Header className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <i className="bi bi-gift me-2"></i>
+                      <strong>Bonus Holidays - {new Date().getFullYear()}</strong>
+                    </div>
+                    <Badge bg="warning" text="dark" pill>{holidays.filter(h => h.type === 'bonus').length} holidays</Badge>
+                  </Card.Header>
+                  <Card.Body>
+                    <Table striped bordered hover responsive size="sm">
+                      <thead>
+                        <tr>
+                          <th style={{ width: '40px' }}>#</th>
+                          <th>Holiday Name</th>
+                          <th>Date</th>
+                          <th>Day</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {holidays.filter(h => h.type === 'bonus').map((holiday, index) => {
+                          const d = new Date(holiday.date + 'T00:00:00');
+                          const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const isPast = d < today;
+                          const isToday = d.getTime() === today.getTime();
+                          return (
+                            <tr key={holiday.id} className={isToday ? 'table-success' : isPast ? 'text-muted' : ''}>
+                              <td>{index + 1}</td>
+                              <td>
+                                <strong>{holiday.name}</strong>
+                                {isToday && <Badge bg="success" className="ms-2">Today</Badge>}
+                              </td>
+                              <td>{d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                              <td><Badge bg={isPast ? 'secondary' : 'info'}>{dayName}</Badge></td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </Table>
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+          )}
+
+          {/* Holiday Color Legend */}
+          <Row className="mb-4">
+            <Col>
+              <div className="d-flex flex-wrap gap-3 align-items-center px-2 py-2 bg-light rounded small text-muted">
+                <span><i className="bi bi-info-circle me-1"></i><strong>Legend:</strong></span>
+                <span><Badge bg="secondary" className="me-1">Day</Badge> Grey / dimmed row = Past holiday</span>
+                <span><Badge bg="success" className="me-1">Today</Badge> Green highlighted row = Today's holiday</span>
+                <span><Badge bg="info" className="me-1">Day</Badge> Blue badge = Upcoming holiday</span>
+              </div>
             </Col>
           </Row>
         </Container>

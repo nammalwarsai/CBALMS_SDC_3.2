@@ -52,12 +52,10 @@ const LeaveBalanceModel = {
     },
 
     // Accrue monthly leave (called by cron job at start of month)
+    // Optimized: single bulk upsert instead of N+1 per-employee queries
     async accrueMonthlyLeave() {
         const year = new Date().getFullYear();
 
-        // Monthly accrual rates: Sick=1/month, Casual=0.83/month, Earned=1.25/month
-        // We initialize full balance at year start, so this is for mid-year joiners
-        // For simplicity, ensure all employees have current year balances
         const { data: employees, error: empError } = await supabase
             .from('profiles')
             .select('id')
@@ -66,16 +64,26 @@ const LeaveBalanceModel = {
         if (empError) throw empError;
         if (!employees || employees.length === 0) return { message: 'No employees found' };
 
-        let initialized = 0;
+        // Build all balance records for all employees in one array
+        const allDefaults = [];
         for (const emp of employees) {
-            const existing = await this.getBalancesByEmployee(emp.id, year);
-            if (existing.length === 0) {
-                await this.initializeBalances(emp.id, year);
-                initialized++;
-            }
+            allDefaults.push(
+                { employee_id: emp.id, leave_type: 'Sick', total_days: 12, used_days: 0, year },
+                { employee_id: emp.id, leave_type: 'Casual', total_days: 10, used_days: 0, year },
+                { employee_id: emp.id, leave_type: 'Earned', total_days: 15, used_days: 0, year }
+            );
         }
 
-        return { message: `Leave accrual complete. ${initialized} new balances initialized for ${year}.` };
+        // Single upsert - ON CONFLICT does nothing for existing records
+        const { data, error } = await supabase
+            .from('leave_balances')
+            .upsert(allDefaults, { onConflict: 'employee_id,leave_type,year', ignoreDuplicates: true })
+            .select();
+
+        if (error) throw error;
+
+        const initialized = data ? data.length : 0;
+        return { message: `Leave accrual complete. ${initialized} balances ensured for ${year} across ${employees.length} employees.` };
     },
 
     // Get all employee balances (admin view)
@@ -96,11 +104,10 @@ const LeaveBalanceModel = {
         if (!balance) throw new Error(`No leave balance found for type ${leaveType}`);
 
         const newUsed = balance.used_days + days;
-        const newRemaining = balance.total_days - newUsed;
 
         const { data, error } = await supabase
             .from('leave_balances')
-            .update({ used_days: newUsed, remaining_days: newRemaining })
+            .update({ used_days: newUsed })
             .eq('id', balance.id)
             .select()
             .single();
@@ -115,11 +122,10 @@ const LeaveBalanceModel = {
         if (!balance) throw new Error(`No leave balance found for type ${leaveType}`);
 
         const newUsed = Math.max(0, balance.used_days - days);
-        const newRemaining = balance.total_days - newUsed;
 
         const { data, error } = await supabase
             .from('leave_balances')
-            .update({ used_days: newUsed, remaining_days: newRemaining })
+            .update({ used_days: newUsed })
             .eq('id', balance.id)
             .select()
             .single();

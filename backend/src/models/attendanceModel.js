@@ -106,13 +106,12 @@ const AttendanceModel = {
         return count || 0;
     },
 
-    // Auto-checkout logic
+    // Auto-checkout logic - optimized with parallel batch updates
     async processAutoCheckout() {
         const today = new Date().toISOString().split('T')[0];
         const now = new Date();
         const checkoutTime = '06:00:00 PM';
 
-        // Only fetch open records up to today (date guard to avoid scanning entire history)
         const { data: openRecords, error } = await supabase
             .from('attendance')
             .select('*')
@@ -126,48 +125,42 @@ const AttendanceModel = {
 
         if (!openRecords || openRecords.length === 0) return { message: "No open records found." };
 
-        let successCount = 0;
-        const errors = [];
+        // Filter records eligible for checkout
+        const toCheckout = openRecords.filter(record => {
+            if (record.date < today) return true;
+            if (record.date === today && now.getHours() >= 18) return true;
+            return false;
+        });
 
-        for (const record of openRecords) {
-            const recordDate = record.date;
-            let shouldCheckout = false;
+        if (toCheckout.length === 0) return { message: "No records eligible for auto-checkout." };
 
-            if (recordDate < today) {
-                shouldCheckout = true;
-            } else if (recordDate === today) {
-                const currentHour = now.getHours();
-                if (currentHour >= 18) {
-                    shouldCheckout = true;
-                }
-            }
-
-            if (shouldCheckout) {
-                try {
-                    const { error: attError } = await supabase
+        // Process all updates in parallel using Promise.allSettled
+        const results = await Promise.allSettled(
+            toCheckout.map(async (record) => {
+                const [attResult, profResult] = await Promise.all([
+                    supabase
                         .from('attendance')
-                        .update({
-                            check_out: checkoutTime,
-                            status: 'Present'
-                        })
-                        .eq('id', record.id);
-
-                    if (attError) throw attError;
-
-                    const { error: profError } = await supabase
+                        .update({ check_out: checkoutTime, status: 'Present' })
+                        .eq('id', record.id),
+                    supabase
                         .from('profiles')
                         .update({ present_status_of_employee: 'Absent' })
-                        .eq('id', record.employee_id);
+                        .eq('id', record.employee_id)
+                ]);
+                if (attResult.error) throw attResult.error;
+                if (profResult.error) throw profResult.error;
+                return record.id;
+            })
+        );
 
-                    if (profError) throw profError;
-
-                    successCount++;
-                } catch (updateError) {
-                    console.error(`Auto-checkout failed for record ${record.id} (employee ${record.employee_id}):`, updateError);
-                    errors.push({ recordId: record.id, employeeId: record.employee_id, error: updateError.message });
-                }
-            }
-        }
+        const successCount = results.filter(r => r.status === 'fulfilled').length;
+        const errors = results
+            .map((r, i) => r.status === 'rejected' ? {
+                recordId: toCheckout[i].id,
+                employeeId: toCheckout[i].employee_id,
+                error: r.reason?.message
+            } : null)
+            .filter(Boolean);
 
         const message = `Auto-checked out ${successCount} employees.${errors.length > 0 ? ` ${errors.length} failed.` : ''}`;
         return { message, errors: errors.length > 0 ? errors : undefined };

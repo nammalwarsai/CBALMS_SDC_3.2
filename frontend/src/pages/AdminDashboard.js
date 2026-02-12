@@ -2,8 +2,6 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Row, Col, Card, Button, Table, Badge, Form, Modal, Spinner, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import adminService from '../services/adminService';
 import attendanceService from '../services/attendanceService';
 import leaveService from '../services/leaveService';
@@ -156,7 +154,11 @@ const AdminDashboard = () => {
   };
   const downloadReport = async (type) => {
     try {
-      const response = await adminService.getAttendanceReport(type);
+      const [response, { default: jsPDF }, { default: autoTable }] = await Promise.all([
+        adminService.getAttendanceReport(type),
+        import('jspdf'),
+        import('jspdf-autotable')
+      ]);
       const data = response.data;
       const doc = new jsPDF();
 
@@ -226,7 +228,11 @@ const AdminDashboard = () => {
   const downloadEmployeeHistory = async () => {
     if (!selectedEmployee) return;
     try {
-      const res = await attendanceService.getHistory(selectedEmployee.id);
+      const [res, { default: jsPDF }, { default: autoTable }] = await Promise.all([
+        attendanceService.getHistory(selectedEmployee.id),
+        import('jspdf'),
+        import('jspdf-autotable')
+      ]);
       const history = res.data || [];
 
       const doc = new jsPDF();
@@ -268,9 +274,11 @@ const AdminDashboard = () => {
       await leaveService.approveLeave(leaveId, leaveRemarks);
       toast.success('Leave approved successfully!');
       setLeaveRemarks('');
-      await fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter);
-      await fetchPendingLeaves();
-      await fetchDashboardStats();
+      await Promise.all([
+        fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter),
+        fetchPendingLeaves(),
+        fetchDashboardStats()
+      ]);
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to approve leave');
     } finally {
@@ -284,9 +292,11 @@ const AdminDashboard = () => {
       await leaveService.rejectLeave(leaveId, leaveRemarks);
       toast.success('Leave rejected successfully!');
       setLeaveRemarks('');
-      await fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter);
-      await fetchPendingLeaves();
-      await fetchDashboardStats();
+      await Promise.all([
+        fetchAllLeaves(leaveFilter === 'All' ? null : leaveFilter),
+        fetchPendingLeaves(),
+        fetchDashboardStats()
+      ]);
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to reject leave');
     } finally {

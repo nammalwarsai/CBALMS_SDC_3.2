@@ -8,6 +8,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import HolidayManagement from './pages/HolidayManagement';
 import Profile from './pages/Profile';
 import PrivateRoute from './components/PrivateRoute';
 import LandingPage from './pages/LandingPage';
@@ -50,6 +51,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <AdminDashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/holidays"
+                element={
+                  <PrivateRoute>
+                    <HolidayManagement />
                   </PrivateRoute>
                 }
               />
