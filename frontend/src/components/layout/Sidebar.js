@@ -109,10 +109,10 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
   };
 
   const NotificationBell = () => (
-    <Dropdown show={showNotifications} onToggle={handleNotificationClick} align="end" className="mb-2">
+    <Dropdown show={showNotifications} onToggle={handleNotificationClick} align="end" className="mb-2 sidebar-notification-dropdown" style={{ '--item-index': 4 }}>
       <Dropdown.Toggle
         variant="link"
-        className="sidebar-link d-flex align-items-center gap-2 rounded-3 px-3 py-2 text-decoration-none position-relative w-100"
+        className="sidebar-link sidebar-link-notification d-flex align-items-center gap-2 rounded-3 px-3 py-2 text-decoration-none position-relative w-100"
         style={{ color: 'inherit', border: 'none' }}
         aria-label="Notifications"
       >
@@ -124,7 +124,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
           </Badge>
         )}
       </Dropdown.Toggle>
-      <Dropdown.Menu style={{ width: '320px', maxHeight: '400px', overflowY: 'auto' }}>
+      <Dropdown.Menu className="sidebar-notification-menu" style={{ width: '320px', maxHeight: '400px', overflowY: 'auto' }}>
         <div className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
           <strong style={{ fontSize: '0.9rem' }}>Notifications</strong>
           {unreadCount > 0 && (
@@ -142,7 +142,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
           notifications.map(notification => (
             <Dropdown.Item
               key={notification.id}
-              className={`d-flex gap-2 py-2 px-3 ${!notification.is_read ? 'bg-light' : ''}`}
+              className={`sidebar-notification-item d-flex gap-2 py-2 px-3 ${!notification.is_read ? 'bg-light' : ''}`}
               style={{ whiteSpace: 'normal', fontSize: '0.85rem' }}
               onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
             >
@@ -170,10 +170,10 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
       <div className="sidebar-user-info text-center p-3 mb-2">
         <div className="sidebar-avatar mx-auto mb-2">
           {user?.profilePhotoUrl ? (
-            <img src={user.profilePhotoUrl} alt="Profile" className="rounded-circle" style={{ width: 60, height: 60, objectFit: 'cover' }} />
+            <img src={user.profilePhotoUrl} alt="Profile" className="sidebar-avatar-image rounded-circle" style={{ width: 60, height: 60, objectFit: 'cover' }} />
           ) : (
             <div
-              className="rounded-circle d-flex align-items-center justify-content-center mx-auto"
+              className="sidebar-avatar-fallback rounded-circle d-flex align-items-center justify-content-center mx-auto"
               style={{
                 width: 60, height: 60,
                 background: 'linear-gradient(135deg, var(--primary-color), var(--primary-dark))',
@@ -184,21 +184,21 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
             </div>
           )}
         </div>
-        <h6 className="mb-0 fw-bold">{user?.name || 'User'}</h6>
-        <small className="text-muted">{isAdmin ? 'Administrator' : 'Employee'}</small>
+        <h6 className="sidebar-user-name mb-0 fw-bold">{user?.name || 'User'}</h6>
+        <small className="sidebar-user-role text-muted">{isAdmin ? 'Administrator' : 'Employee'}</small>
       </div>
 
-      <hr className="mx-3 my-1" />
+      <hr className="sidebar-divider mx-3 my-1" />
 
       {/* Navigation Links */}
       <Nav className="flex-column px-2 flex-grow-1">
-        {links.map((link) => (
+        {links.map((link, index) => (
           <Nav.Link
             key={link.path}
             className={`sidebar-link d-flex align-items-center gap-2 rounded-3 px-3 py-2 mb-1 ${location.pathname === link.path ? 'active' : ''}`}
             onClick={() => handleNav(link.path)}
             aria-label={link.label}
-            style={{ color: '#000' }}
+            style={{ '--item-index': index + 1 }}
           >
             <i className={`bi ${link.icon}`}></i>
             <span>{link.label}</span>
@@ -211,7 +211,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
       <div className="p-3 mt-auto">
         <Button
           variant="outline-danger"
-          className="w-100 d-flex align-items-center justify-content-center gap-2"
+          className="sidebar-logout-btn w-100 d-flex align-items-center justify-content-center gap-2"
           onClick={onLogout}
           aria-label="Logout"
         >
@@ -228,12 +228,12 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
       {collapsed && onToggle && (
         <Button
           variant="light"
-          className="position-fixed d-none d-lg-flex align-items-center justify-content-center"
+          className="sidebar-toggle-desktop position-fixed d-none d-lg-flex align-items-center justify-content-center"
           style={{
             top: '1rem', left: '1rem', zIndex: 1051,
             width: '42px', height: '42px', borderRadius: '10px',
             boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
-            border: '1px solid #E5E7EB'
+            border: '1px solid #0b5cff'
           }}
           onClick={onToggle}
           aria-label="Open sidebar"
@@ -245,7 +245,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
       {/* Mobile Toggle Button */}
       <Button
         variant="primary"
-        className="sidebar-toggle d-lg-none position-fixed"
+        className="sidebar-toggle sidebar-mobile-toggle d-lg-none position-fixed"
         style={{ top: '1rem', left: '1rem', zIndex: 1050 }}
         onClick={() => setShowMobile(true)}
         aria-label="Toggle navigation menu"
@@ -271,7 +271,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
       </Offcanvas>
 
       {/* Desktop Sidebar */}
-      <div className="sidebar-desktop d-none d-lg-flex flex-column" style={{
+      <div className="sidebar-desktop sidebar-desktop-shell d-none d-lg-flex flex-column" style={{
         width: '250px',
         minHeight: '100vh',
         background: 'white',
@@ -285,14 +285,14 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
         transition: 'transform 0.3s ease'
       }}>
         {/* Brand with toggle */}
-        <div className="p-3 border-bottom d-flex align-items-center justify-content-between">
+        <div className="sidebar-brand p-3 border-bottom d-flex align-items-center justify-content-between">
           <h5 className="mb-0 fw-bold">
-            <i className="bi bi-cloud-check me-2 text-primary"></i>CBALMS
+            <i className="sidebar-brand-icon bi bi-cloud-check me-2 text-primary"></i>CBALMS
           </h5>
           {onToggle && (
             <Button
               variant="link"
-              className="p-0 text-dark"
+              className="sidebar-collapse-btn p-0 text-dark"
               onClick={onToggle}
               aria-label="Collapse sidebar"
               style={{ fontSize: '1.3rem', lineHeight: 1 }}
