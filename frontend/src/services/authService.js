@@ -41,7 +41,13 @@ const resetPassword = async (payload) => {
   return response.data;
 };
 
-const logout = () => {
+const logout = async () => {
+  try {
+    await api.post('/auth/logout');
+  } catch (error) {
+    // Still clear local storage even if backend call fails
+    console.error('Logout API call failed:', error);
+  }
   localStorage.removeItem('user');
   localStorage.removeItem('token');
 };

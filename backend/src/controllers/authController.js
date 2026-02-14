@@ -1,6 +1,7 @@
 const AuthModel = require('../models/authModel');
 const ProfileModel = require('../models/profileModel');
 const LeaveBalanceModel = require('../models/leaveBalanceModel');
+const { sendLoginConfirmationEmail, sendLogoutConfirmationEmail } = require('../services/emailService');
 
 const normalizeUser = (user, profile) => {
     if (!user) return null;
@@ -105,6 +106,10 @@ const authController = {
                 user: normalizedUser
             });
 
+            // Fire-and-forget: send login confirmation email (don't await)
+            const userName = profile?.full_name || data.user?.user_metadata?.name || 'User';
+            sendLoginConfirmationEmail(data.user.email, userName);
+
         } catch (error) {
             next(error);
         }
@@ -158,6 +163,29 @@ const authController = {
                 message: 'Profile updated successfully',
                 user: normalizedUser
             });
+
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async logout(req, res, next) {
+        try {
+            const user = req.user;
+            let profile = null;
+            try {
+                profile = await ProfileModel.getProfileById(user.id);
+            } catch (err) {
+                // profile might not exist
+            }
+
+            const userName = profile?.full_name || user.user_metadata?.name || 'User';
+            const email = profile?.email || user.email;
+
+            res.status(200).json({ message: 'Logout successful' });
+
+            // Fire-and-forget: send logout confirmation email
+            sendLogoutConfirmationEmail(email, userName);
 
         } catch (error) {
             next(error);

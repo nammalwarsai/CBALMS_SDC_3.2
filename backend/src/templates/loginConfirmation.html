@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Notification</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f2f5;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f0f2f5;padding:40px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:linear-gradient(135deg,#1a73e8 0%,#0d47a1 100%);padding:40px 40px 30px 40px;text-align:center;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td align="center" style="padding-bottom:16px;">
+                                        <div style="width:64px;height:64px;background-color:rgba(255,255,255,0.2);border-radius:50%;display:inline-block;line-height:64px;text-align:center;">
+                                            <span style="font-size:32px;color:#ffffff;">&#128274;</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center">
+                                        <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">CBALMS</h1>
+                                        <p style="margin:6px 0 0 0;color:rgba(255,255,255,0.85);font-size:13px;font-weight:400;letter-spacing:1px;text-transform:uppercase;">Leave Management System</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Success Badge -->
+                    <tr>
+                        <td style="padding:32px 40px 0 40px;text-align:center;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                                <tr>
+                                    <td style="background-color:#e8f5e9;border-radius:24px;padding:8px 20px;">
+                                        <span style="color:#2e7d32;font-size:14px;font-weight:600;">&#10003; Successful Login</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding:24px 40px 0 40px;text-align:center;">
+                            <h2 style="margin:0;color:#1a1a2e;font-size:22px;font-weight:700;">Hello, {{userName}}!</h2>
+                            <p style="margin:10px 0 0 0;color:#555770;font-size:15px;line-height:1.6;">
+                                We detected a new sign-in to your CBALMS account. Here are the details:
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Login Details Card -->
+                    <tr>
+                        <td style="padding:24px 40px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f8f9fc;border-radius:12px;border:1px solid #e8eaf0;">
+                                <tr>
+                                    <td style="padding:24px 28px;">
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                            <!-- Date Row -->
+                                            <tr>
+                                                <td style="padding-bottom:16px;border-bottom:1px solid #e8eaf0;">
+                                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                                        <tr>
+                                                            <td width="40" valign="top">
+                                                                <div style="width:36px;height:36px;background-color:#e3f2fd;border-radius:8px;text-align:center;line-height:36px;">
+                                                                    <span style="font-size:16px;">&#128197;</span>
+                                                                </div>
+                                                            </td>
+                                                            <td style="padding-left:12px;" valign="middle">
+                                                                <p style="margin:0;color:#8a8da0;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">Date</p>
+                                                                <p style="margin:3px 0 0 0;color:#1a1a2e;font-size:15px;font-weight:600;">{{loginDate}}</p>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <!-- Time Row -->
+                                            <tr>
+                                                <td style="padding-top:16px;">
+                                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                                        <tr>
+                                                            <td width="40" valign="top">
+                                                                <div style="width:36px;height:36px;background-color:#fce4ec;border-radius:8px;text-align:center;line-height:36px;">
+                                                                    <span style="font-size:16px;">&#9200;</span>
+                                                                </div>
+                                                            </td>
+                                                            <td style="padding-left:12px;" valign="middle">
+                                                                <p style="margin:0;color:#8a8da0;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">Time</p>
+                                                                <p style="margin:3px 0 0 0;color:#1a1a2e;font-size:15px;font-weight:600;">{{loginTime}}</p>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Security Notice -->
+                    <tr>
+                        <td style="padding:0 40px 24px 40px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#fff8e1;border-radius:12px;border:1px solid #ffe082;">
+                                <tr>
+                                    <td style="padding:18px 24px;">
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                            <tr>
+                                                <td width="28" valign="top">
+                                                    <span style="font-size:18px;">&#9888;&#65039;</span>
+                                                </td>
+                                                <td style="padding-left:10px;">
+                                                    <p style="margin:0;color:#f57f17;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Security Notice</p>
+                                                    <p style="margin:6px 0 0 0;color:#795548;font-size:13px;line-height:1.5;">
+                                                        If this wasn't you, please change your password immediately and contact your administrator.
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding:0 40px;">
+                            <hr style="border:none;border-top:1px solid #e8eaf0;margin:0;" />
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:24px 40px 32px 40px;text-align:center;">
+                            <p style="margin:0;color:#8a8da0;font-size:12px;line-height:1.6;">
+                                This is an automated notification from CBALMS.<br />
+                                Please do not reply to this email.
+                            </p>
+                            <p style="margin:12px 0 0 0;color:#b0b3c5;font-size:11px;">
+                                &copy; {{year}} CBALMS. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
