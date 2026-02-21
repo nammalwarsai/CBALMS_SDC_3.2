@@ -1,4 +1,9 @@
 const cron = require('node-cron');
+const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 const AttendanceModel = require('../models/attendanceModel');
 const LeaveBalanceModel = require('../models/leaveBalanceModel');
 
