@@ -2,6 +2,7 @@ const LeaveModel = require('../models/leaveModel');
 const LeaveBalanceModel = require('../models/leaveBalanceModel');
 const NotificationModel = require('../models/notificationModel');
 const HolidayModel = require('../models/holidayModel');
+const { sendLeaveApplicationEmail, sendLeaveStatusEmail } = require('../services/emailService');
 
 // Helper: calculate working days between two dates (excluding weekends and holidays)
 const calculateWorkingDays = (startDate, endDate, holidayDatesSet = new Set()) => {
@@ -78,6 +79,19 @@ const leaveController = {
                 );
             } catch (notifError) {
                 console.error('Failed to send notification:', notifError);
+            }
+
+            // Send leave application confirmation email to the employee (fire-and-forget)
+            const employeeEmail = req.user.email;
+            if (employeeEmail) {
+                const empName = req.user.full_name || req.user.name || 'User';
+                sendLeaveApplicationEmail(employeeEmail, empName, {
+                    leaveType,
+                    startDate,
+                    endDate,
+                    workingDays: requestedDays,
+                    reason: reason || 'Not specified',
+                }).catch(err => console.error('Failed to send leave application email:', err.message));
             }
 
             res.status(201).json({
@@ -227,6 +241,20 @@ const leaveController = {
                 console.error('Failed to send notification:', notifError);
             }
 
+            // Send leave status email to the employee (fire-and-forget)
+            const employeeEmail = updatedLeave.profiles?.email;
+            const employeeName = updatedLeave.profiles?.full_name || 'User';
+            if (employeeEmail) {
+                sendLeaveStatusEmail(employeeEmail, employeeName, {
+                    leaveType: existingLeave.leave_type,
+                    startDate: existingLeave.start_date,
+                    endDate: existingLeave.end_date,
+                    status,
+                    adminName: req.user.full_name || 'Admin',
+                    remarks: remarks || null,
+                }).catch(err => console.error('Failed to send leave status email:', err.message));
+            }
+
             res.status(200).json({
                 message: `Leave request ${status.toLowerCase()} successfully`,
                 data: updatedLeave
@@ -244,6 +272,14 @@ const leaveController = {
 
             if (!leave) {
                 return res.status(404).json({ error: 'Leave request not found' });
+            }
+
+            // Authorization: only owner or admins can view leave details
+            const requesterId = req.user?.id;
+            const requesterRole = req.user?.role;
+            const isAdmin = requesterRole === 'admin';
+            if (!isAdmin && requesterId !== leave.employee_id) {
+                return res.status(403).json({ error: 'Access denied' });
             }
 
             res.status(200).json({ data: leave });

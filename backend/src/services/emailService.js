@@ -99,4 +99,124 @@ const sendLogoutConfirmationEmail = async (email, userName) => {
     }
 };
 
-module.exports = { sendLoginConfirmationEmail, sendLogoutConfirmationEmail };
+const sendLeaveApplicationEmail = async (email, userName, leaveDetails) => {
+    try {
+        const { leaveType, startDate, endDate, workingDays, reason } = leaveDetails;
+        const now = new Date();
+
+        const formatDate = (dateStr) => {
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            });
+        };
+
+        const html = loadTemplate('leaveApplication.html', {
+            userName: userName || 'User',
+            leaveType: leaveType || 'N/A',
+            startDate: formatDate(startDate),
+            endDate: formatDate(endDate),
+            workingDays: String(workingDays || 0),
+            reason: reason || 'Not specified',
+            year: String(now.getFullYear()),
+        });
+
+        const mailOptions = {
+            from: `"CBALMS" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Leave Application Submitted - CBALMS',
+            html,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Leave application email sent to ${email}`);
+    } catch (error) {
+        console.error('Failed to send leave application email:', error.message);
+    }
+};
+
+const sendLeaveStatusEmail = async (email, userName, leaveDetails) => {
+    try {
+        const { leaveType, startDate, endDate, status, adminName, remarks } = leaveDetails;
+        const now = new Date();
+        const isApproved = status === 'Approved';
+
+        const formatDate = (dateStr) => {
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            });
+        };
+
+        // Build remarks section HTML
+        const remarksSection = remarks
+            ? `<tr>
+                <td style="padding-top:16px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                            <td width="40" valign="top">
+                                <div style="width:36px;height:36px;background-color:#f3e5f5;border-radius:8px;text-align:center;line-height:36px;">
+                                    <span style="font-size:16px;">&#128172;</span>
+                                </div>
+                            </td>
+                            <td style="padding-left:12px;" valign="middle">
+                                <p style="margin:0;color:#8a8da0;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">Admin Remarks</p>
+                                <p style="margin:3px 0 0 0;color:#1a1a2e;font-size:15px;font-weight:600;">${remarks}</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>`
+            : '';
+
+        const html = loadTemplate('leaveStatus.html', {
+            userName: userName || 'User',
+            leaveType: leaveType || 'N/A',
+            startDate: formatDate(startDate),
+            endDate: formatDate(endDate),
+            status: status,
+            statusLower: status.toLowerCase(),
+            adminName: adminName || 'Admin',
+            remarksSection: remarksSection,
+            headerStyleAttr: `style="background:linear-gradient(135deg,${isApproved ? '#2e7d32' : '#c62828'} 0%,${isApproved ? '#1b5e20' : '#b71c1c'} 100%);padding:40px 40px 30px 40px;text-align:center;"`,
+            badgeStyleAttr: `style="background-color:${isApproved ? '#e8f5e9' : '#fce4ec'};border-radius:24px;padding:8px 20px;"`,
+            badgeTextStyleAttr: `style="color:${isApproved ? '#2e7d32' : '#c62828'};font-size:14px;font-weight:600;"`,
+            noticeTableStyleAttr: `style="background-color:${isApproved ? '#e8f5e9' : '#fce4ec'};border-radius:12px;border:1px solid ${isApproved ? '#a5d6a7' : '#ef9a9a'};"`,
+            noticeTitleStyleAttr: `style="margin:0;color:${isApproved ? '#2e7d32' : '#c62828'};font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;"`,
+            // Approved styling
+            headerColorStart: isApproved ? '#2e7d32' : '#c62828',
+            headerColorEnd: isApproved ? '#1b5e20' : '#b71c1c',
+            headerIcon: isApproved ? '&#9989;' : '&#10060;',
+            badgeBgColor: isApproved ? '#e8f5e9' : '#fce4ec',
+            badgeTextColor: isApproved ? '#2e7d32' : '#c62828',
+            badgeIcon: isApproved ? '&#10003;' : '&#10007;',
+            noticeBgColor: isApproved ? '#e8f5e9' : '#fce4ec',
+            noticeBorderColor: isApproved ? '#a5d6a7' : '#ef9a9a',
+            noticeIcon: isApproved ? '&#9989;' : '&#9888;&#65039;',
+            noticeTextColor: isApproved ? '#2e7d32' : '#c62828',
+            noticeTitle: isApproved ? 'Leave Approved' : 'Leave Rejected',
+            noticeMessage: isApproved
+                ? 'Your leave has been approved. Your leave balance has been updated accordingly. Enjoy your time off!'
+                : 'Unfortunately, your leave request has been rejected. Please contact your administrator if you have any questions.',
+            year: String(now.getFullYear()),
+        });
+
+        const mailOptions = {
+            from: `"CBALMS" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: `Leave ${status} - CBALMS`,
+            html,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Leave status (${status}) email sent to ${email}`);
+    } catch (error) {
+        console.error('Failed to send leave status email:', error.message);
+    }
+};
+
+module.exports = { sendLoginConfirmationEmail, sendLogoutConfirmationEmail, sendLeaveApplicationEmail, sendLeaveStatusEmail };
