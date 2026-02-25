@@ -123,7 +123,7 @@ const AttendanceModel = {
             throw error;
         }
 
-        if (!openRecords || openRecords.length === 0) return { message: "No open records found." };
+        if (!openRecords || openRecords.length === 0) return { message: "there are no open attendance records to auto-checkout." };
 
         // Filter records eligible for checkout
         const toCheckout = openRecords.filter(record => {
@@ -162,7 +162,7 @@ const AttendanceModel = {
             } : null)
             .filter(Boolean);
 
-        const message = `Auto-checked out ${successCount} employees.${errors.length > 0 ? ` ${errors.length} failed.` : ''}`;
+        const message = `Auto-checked out ${successCount} employees successfully.${errors.length > 0 ? ` ${errors.length} failed.` : ''}`;
         return { message, errors: errors.length > 0 ? errors : undefined };
     }
 };
