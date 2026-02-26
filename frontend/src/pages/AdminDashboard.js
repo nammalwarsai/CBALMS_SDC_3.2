@@ -9,6 +9,7 @@ import Sidebar from '../components/layout/Sidebar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import AdminStatsCards from '../components/admin/AdminStatsCards';
 import EmployeeTable from '../components/admin/EmployeeTable';
+import ThemeToggle from '../components/common/ThemeToggle';
 import useToast from '../hooks/useToast';
 import { formatDate } from '../utils/dateUtils';
 import { getGreeting, arrayToCSV, downloadCSV } from '../utils/helpers';
@@ -40,7 +41,7 @@ const AdminDashboard = () => {
   const [attendanceListType, setAttendanceListType] = useState('');
   const [attendanceListData, setAttendanceListData] = useState([]);
   const [attendanceListLoading, setAttendanceListLoading] = useState(false);
-  
+
   // Leave management states
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showTodayLeavesModal, setShowTodayLeavesModal] = useState(false);
@@ -319,7 +320,8 @@ const AdminDashboard = () => {
                 <h2><i className="bi bi-shield-check me-2"></i>Admin Dashboard</h2>
                 <p className="text-muted mb-0">{getGreeting()}, {user ? user.name : 'Admin'}! ({user?.email})</p>
               </div>
-              <div className="mt-3 mt-md-0 d-flex gap-2 flex-wrap d-none d-lg-flex">
+              <div className="mt-3 mt-md-0 d-flex gap-2 flex-wrap d-none d-lg-flex align-items-center">
+                <ThemeToggle />
                 <OverlayTrigger placement="bottom" overlay={<Tooltip>View and edit your profile</Tooltip>}>
                   <Button variant="info" onClick={() => navigate('/profile')} aria-label="My Profile">
                     <i className="bi bi-person me-1"></i>My Profile
@@ -347,9 +349,12 @@ const AdminDashboard = () => {
             <Card.Body className="py-3">
               <Row className="text-center g-2">
                 <Col xs={4}>
-                  <Button variant="info" className="w-100 py-2" onClick={() => navigate('/profile')}>
+                  <Button variant="info" className="w-100 py-2 mb-2" onClick={() => navigate('/profile')}>
                     <i className="bi bi-person me-1"></i>Profile
                   </Button>
+                  <div className="d-flex justify-content-center">
+                    <ThemeToggle />
+                  </div>
                 </Col>
                 <Col xs={4}>
                   <Button variant="warning" className="w-100 py-2" onClick={handleOpenTodayLeavesModal}>
@@ -373,358 +378,358 @@ const AdminDashboard = () => {
             onOpenTodayLeavesModal={handleOpenTodayLeavesModal}
           />
 
-      {/* Employee List Table */}
-      <Row className="mb-4">
-        <Col>
-          <EmployeeTable
-            employees={employees}
-            loading={loading}
-            onViewDetails={handleViewDetails}
-            onExportCSV={exportEmployeesCSV}
-            onDownloadReport={downloadReport}
-          />
-        </Col>
-      </Row>
+          {/* Employee List Table */}
+          <Row className="mb-4">
+            <Col>
+              <EmployeeTable
+                employees={employees}
+                loading={loading}
+                onViewDetails={handleViewDetails}
+                onExportCSV={exportEmployeesCSV}
+                onDownloadReport={downloadReport}
+              />
+            </Col>
+          </Row>
 
-      {/* Employee Details Modal */}
-      <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Employee Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedEmployee && (
-            <Container>
-              <Row>
-                <Col md={4} className="text-center mb-3">
-                  <div className="profile-image-container mx-auto" style={{ width: '150px', height: '150px', borderRadius: '50%', overflow: 'hidden', border: '4px solid white', boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.1)' }}>
-                    {selectedEmployee.profile_photo ? (
-                      <img
-                        src={selectedEmployee.profile_photo}
-                        alt="Profile"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div className="d-flex align-items-center justify-content-center h-100 bg-light text-muted">
-                        No Photo
-                      </div>
-                    )}
-                  </div>
-                </Col>
-                <Col md={8}>
-                  <h4 className="mb-3">{selectedEmployee.full_name}</h4>
-                  <p className="mb-2"><strong>Email:</strong> {selectedEmployee.email}</p>
-                  <p className="mb-2"><strong>Employee ID:</strong> {selectedEmployee.employee_id}</p>
-                  <p className="mb-2"><strong>Department:</strong> {selectedEmployee.department}</p>
-                  <p className="mb-2"><strong>Mobile:</strong> {selectedEmployee.mobile_number}</p>
-                  <p className="mb-2">
-                    <strong>Current Status:</strong>{' '}
-                    <Badge bg={selectedEmployee.present_status_of_employee === 'Present' ? 'success' : 'secondary'}>
-                      {selectedEmployee.present_status_of_employee || 'Absent'}
-                    </Badge>
-                  </p>
-                </Col>
-              </Row>
-              <Row className="mt-4">
-                <Col>
-                  <h5 className="mb-3">Recent Attendance</h5>
-                  <Table size="sm" bordered>
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Check In</th>
-                        <th>Check Out</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedEmployee.recentAttendance && selectedEmployee.recentAttendance.length > 0 ? (
-                        selectedEmployee.recentAttendance.map((rec, idx) => (
-                          <tr key={idx}>
-                            <td>{formatDate(rec.date)}</td>
-                            <td>{rec.check_in || '-'}</td>
-                            <td>{rec.check_out || '-'}</td>
-                            <td>
-                              <Badge bg={rec.status === 'Present' ? 'success' : 'warning'}>
-                                {rec.status}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr><td colSpan="4" className="text-center text-muted">No recent records</td></tr>
-                      )}
-                    </tbody>
-                  </Table>
-                </Col>
-              </Row>
-              <Row className="mt-3">
-                <Col className="text-end">
-                  <Button variant="success" onClick={downloadEmployeeHistory}>
-                    Download Full Attendance History
-                  </Button>
-                </Col>
-              </Row>
-            </Container>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Present/Absent Employees List Modal */}
-      <Modal show={showAttendanceListModal} onHide={() => setShowAttendanceListModal(false)} size="lg">
-        <Modal.Header closeButton style={{ 
-          background: attendanceListType === 'present' 
-            ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' 
-            : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', 
-          color: 'white' 
-        }}>
-          <Modal.Title>
-            <i className={`bi ${attendanceListType === 'present' ? 'bi-check-circle' : 'bi-x-circle'} me-2`}></i>
-            {attendanceListType === 'present' ? 'Present Today' : 'Absent Today'} ({attendanceListData.length})
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {attendanceListLoading ? (
-            <div className="text-center py-5">
-              <Spinner animation="border" variant="primary" />
-              <p className="text-muted mt-3">Loading {attendanceListType} employees...</p>
-            </div>
-          ) : attendanceListData.length === 0 ? (
-            <div className="text-center py-5">
-              <p className="text-muted">
-                {attendanceListType === 'present' 
-                  ? 'No employees have checked in today yet.' 
-                  : 'All employees are present today!'}
-              </p>
-            </div>
-          ) : (
-            <Table striped bordered hover responsive>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Employee ID</th>
-                  <th>Department</th>
-                  <th>Mobile</th>
-                  {attendanceListType === 'present' && <th>Check In Time</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {attendanceListData.map((emp, index) => (
-                  <tr key={emp.id || index}>
-                    <td>{index + 1}</td>
-                    <td><strong>{emp.full_name}</strong></td>
-                    <td>{emp.employee_id}</td>
-                    <td>{emp.department}</td>
-                    <td>{emp.mobile_number}</td>
-                    {attendanceListType === 'present' && <td><Badge bg="success">{emp.check_in || '-'}</Badge></td>}
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAttendanceListModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Leave Requests Management Modal */}
-      <Modal show={showLeaveModal} onHide={() => setShowLeaveModal(false)} size="xl">
-        <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: 'white' }}>
-          <Modal.Title><i className="bi bi-envelope-paper me-2"></i>Leave Requests Management</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3 d-flex gap-2">
-            <Button 
-              variant={leaveFilter === 'Pending' ? 'warning' : 'outline-warning'}
-              onClick={() => handleLeaveFilterChange('Pending')}
-            >
-              Pending
-            </Button>
-            <Button 
-              variant={leaveFilter === 'Approved' ? 'success' : 'outline-success'}
-              onClick={() => handleLeaveFilterChange('Approved')}
-            >
-              Approved
-            </Button>
-            <Button 
-              variant={leaveFilter === 'Rejected' ? 'danger' : 'outline-danger'}
-              onClick={() => handleLeaveFilterChange('Rejected')}
-            >
-              Rejected
-            </Button>
-            <Button 
-              variant={leaveFilter === 'All' ? 'primary' : 'outline-primary'}
-              onClick={() => handleLeaveFilterChange('All')}
-            >
-              All
-            </Button>
-          </div>
-
-          {leaveRequests.length === 0 ? (
-            <div className="text-center py-5">
-              <p className="text-muted">No {leaveFilter !== 'All' ? leaveFilter.toLowerCase() : ''} leave requests found.</p>
-            </div>
-          ) : (
-            <Table striped bordered hover responsive>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Employee</th>
-                  <th>Department</th>
-                  <th>Type</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaveRequests.map((leave, index) => (
-                  <tr key={leave.id}>
-                    <td>{index + 1}</td>
-                    <td>
-                      <strong>{leave.profiles?.full_name || 'N/A'}</strong>
-                      <br />
-                      <small className="text-muted">{leave.profiles?.employee_id}</small>
-                    </td>
-                    <td>{leave.profiles?.department || '-'}</td>
-                    <td><Badge bg="info">{leave.leave_type}</Badge></td>
-                    <td>{formatDate(leave.start_date)}</td>
-                    <td>{formatDate(leave.end_date)}</td>
-                    <td style={{ maxWidth: '200px' }}>
-                      <small>{leave.reason || '-'}</small>
-                    </td>
-                    <td>
-                      <Badge bg={
-                        leave.status === 'Approved' ? 'success' : 
-                        leave.status === 'Rejected' ? 'danger' : 'warning'
-                      }>
-                        {leave.status}
-                      </Badge>
-                    </td>
-                    <td>
-                      {leave.status === 'Pending' ? (
-                        <div className="d-flex flex-column gap-1">
-                          <div className="d-flex gap-1">
-                            <Button 
-                              size="sm" 
-                              variant="success"
-                              disabled={processingLeave}
-                              onClick={() => handleApproveLeave(leave.id)}
-                              aria-label={`Approve leave for ${leave.profiles?.full_name}`}
-                            >
-                              <i className="bi bi-check-lg me-1"></i>Approve
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="danger"
-                              disabled={processingLeave}
-                              onClick={() => handleRejectLeave(leave.id)}
-                              aria-label={`Reject leave for ${leave.profiles?.full_name}`}
-                            >
-                              <i className="bi bi-x-lg me-1"></i>Reject
-                            </Button>
-                          </div>
-                          <Form.Control
-                            size="sm"
-                            type="text"
-                            placeholder="Remarks (optional)"
-                            value={selectedLeave === leave.id ? leaveRemarks : ''}
-                            onChange={(e) => {
-                              setSelectedLeave(leave.id);
-                              setLeaveRemarks(e.target.value);
-                            }}
-                            onFocus={() => setSelectedLeave(leave.id)}
+          {/* Employee Details Modal */}
+          <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
+            <Modal.Header closeButton>
+              <Modal.Title>Employee Details</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {selectedEmployee && (
+                <Container>
+                  <Row>
+                    <Col md={4} className="text-center mb-3">
+                      <div className="profile-image-container mx-auto" style={{ width: '150px', height: '150px', borderRadius: '50%', overflow: 'hidden', border: '4px solid white', boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.1)' }}>
+                        {selectedEmployee.profile_photo ? (
+                          <img
+                            src={selectedEmployee.profile_photo}
+                            alt="Profile"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
-                        </div>
-                      ) : (
-                        <small className="text-muted">
-                          {leave.admin_remarks || 'No remarks'}
-                        </small>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowLeaveModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+                        ) : (
+                          <div className="d-flex align-items-center justify-content-center h-100 bg-light text-muted">
+                            No Photo
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+                    <Col md={8}>
+                      <h4 className="mb-3">{selectedEmployee.full_name}</h4>
+                      <p className="mb-2"><strong>Email:</strong> {selectedEmployee.email}</p>
+                      <p className="mb-2"><strong>Employee ID:</strong> {selectedEmployee.employee_id}</p>
+                      <p className="mb-2"><strong>Department:</strong> {selectedEmployee.department}</p>
+                      <p className="mb-2"><strong>Mobile:</strong> {selectedEmployee.mobile_number}</p>
+                      <p className="mb-2">
+                        <strong>Current Status:</strong>{' '}
+                        <Badge bg={selectedEmployee.present_status_of_employee === 'Present' ? 'success' : 'secondary'}>
+                          {selectedEmployee.present_status_of_employee || 'Absent'}
+                        </Badge>
+                      </p>
+                    </Col>
+                  </Row>
+                  <Row className="mt-4">
+                    <Col>
+                      <h5 className="mb-3">Recent Attendance</h5>
+                      <Table size="sm" bordered>
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedEmployee.recentAttendance && selectedEmployee.recentAttendance.length > 0 ? (
+                            selectedEmployee.recentAttendance.map((rec, idx) => (
+                              <tr key={idx}>
+                                <td>{formatDate(rec.date)}</td>
+                                <td>{rec.check_in || '-'}</td>
+                                <td>{rec.check_out || '-'}</td>
+                                <td>
+                                  <Badge bg={rec.status === 'Present' ? 'success' : 'warning'}>
+                                    {rec.status}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr><td colSpan="4" className="text-center text-muted">No recent records</td></tr>
+                          )}
+                        </tbody>
+                      </Table>
+                    </Col>
+                  </Row>
+                  <Row className="mt-3">
+                    <Col className="text-end">
+                      <Button variant="success" onClick={downloadEmployeeHistory}>
+                        Download Full Attendance History
+                      </Button>
+                    </Col>
+                  </Row>
+                </Container>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+                Close
+              </Button>
+            </Modal.Footer>
+          </Modal>
 
-      {/* Today's Leaves Modal */}
-      <Modal show={showTodayLeavesModal} onHide={() => setShowTodayLeavesModal(false)} size="lg">
-        <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
-          <Modal.Title><i className="bi bi-calendar-event me-2"></i>Today's Leaves ({todayLeaves.length})</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {todayLeaves.length === 0 ? (
-            <div className="text-center py-5">
-              <p className="text-muted">No employees are on leave today.</p>
-            </div>
-          ) : (
-            <Table striped bordered hover responsive>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Employee</th>
-                  <th>Department</th>
-                  <th>Leave Type</th>
-                  <th>Period</th>
-                  <th>Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todayLeaves.map((leave, index) => (
-                  <tr key={leave.id}>
-                    <td>{index + 1}</td>
-                    <td>
-                      <strong>{leave.profiles?.full_name || 'N/A'}</strong>
-                      <br />
-                      <small className="text-muted">{leave.profiles?.employee_id}</small>
-                    </td>
-                    <td>{leave.profiles?.department || '-'}</td>
-                    <td><Badge bg="warning" text="dark">{leave.leave_type}</Badge></td>
-                    <td>
-                      {formatDate(leave.start_date)} to {formatDate(leave.end_date)}
-                    </td>
-                    <td style={{ maxWidth: '250px' }}>
-                      <small>{leave.reason || '-'}</small>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowTodayLeavesModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+          {/* Present/Absent Employees List Modal */}
+          <Modal show={showAttendanceListModal} onHide={() => setShowAttendanceListModal(false)} size="lg">
+            <Modal.Header closeButton style={{
+              background: attendanceListType === 'present'
+                ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+              color: 'white'
+            }}>
+              <Modal.Title>
+                <i className={`bi ${attendanceListType === 'present' ? 'bi-check-circle' : 'bi-x-circle'} me-2`}></i>
+                {attendanceListType === 'present' ? 'Present Today' : 'Absent Today'} ({attendanceListData.length})
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {attendanceListLoading ? (
+                <div className="text-center py-5">
+                  <Spinner animation="border" variant="primary" />
+                  <p className="text-muted mt-3">Loading {attendanceListType} employees...</p>
+                </div>
+              ) : attendanceListData.length === 0 ? (
+                <div className="text-center py-5">
+                  <p className="text-muted">
+                    {attendanceListType === 'present'
+                      ? 'No employees have checked in today yet.'
+                      : 'All employees are present today!'}
+                  </p>
+                </div>
+              ) : (
+                <Table striped bordered hover responsive>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Employee ID</th>
+                      <th>Department</th>
+                      <th>Mobile</th>
+                      {attendanceListType === 'present' && <th>Check In Time</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendanceListData.map((emp, index) => (
+                      <tr key={emp.id || index}>
+                        <td>{index + 1}</td>
+                        <td><strong>{emp.full_name}</strong></td>
+                        <td>{emp.employee_id}</td>
+                        <td>{emp.department}</td>
+                        <td>{emp.mobile_number}</td>
+                        {attendanceListType === 'present' && <td><Badge bg="success">{emp.check_in || '-'}</Badge></td>}
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowAttendanceListModal(false)}>
+                Close
+              </Button>
+            </Modal.Footer>
+          </Modal>
 
-      {/* Confirm Dialog */}
-      <ConfirmDialog
-        show={showConfirmDialog}
-        onHide={() => setShowConfirmDialog(false)}
-        onConfirm={confirmAction || (() => {})}
-        {...confirmConfig}
-      />
-    </Container>
+          {/* Leave Requests Management Modal */}
+          <Modal show={showLeaveModal} onHide={() => setShowLeaveModal(false)} size="xl">
+            <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: 'white' }}>
+              <Modal.Title><i className="bi bi-envelope-paper me-2"></i>Leave Requests Management</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="mb-3 d-flex gap-2">
+                <Button
+                  variant={leaveFilter === 'Pending' ? 'warning' : 'outline-warning'}
+                  onClick={() => handleLeaveFilterChange('Pending')}
+                >
+                  Pending
+                </Button>
+                <Button
+                  variant={leaveFilter === 'Approved' ? 'success' : 'outline-success'}
+                  onClick={() => handleLeaveFilterChange('Approved')}
+                >
+                  Approved
+                </Button>
+                <Button
+                  variant={leaveFilter === 'Rejected' ? 'danger' : 'outline-danger'}
+                  onClick={() => handleLeaveFilterChange('Rejected')}
+                >
+                  Rejected
+                </Button>
+                <Button
+                  variant={leaveFilter === 'All' ? 'primary' : 'outline-primary'}
+                  onClick={() => handleLeaveFilterChange('All')}
+                >
+                  All
+                </Button>
+              </div>
+
+              {leaveRequests.length === 0 ? (
+                <div className="text-center py-5">
+                  <p className="text-muted">No {leaveFilter !== 'All' ? leaveFilter.toLowerCase() : ''} leave requests found.</p>
+                </div>
+              ) : (
+                <Table striped bordered hover responsive>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Employee</th>
+                      <th>Department</th>
+                      <th>Type</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaveRequests.map((leave, index) => (
+                      <tr key={leave.id}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <strong>{leave.profiles?.full_name || 'N/A'}</strong>
+                          <br />
+                          <small className="text-muted">{leave.profiles?.employee_id}</small>
+                        </td>
+                        <td>{leave.profiles?.department || '-'}</td>
+                        <td><Badge bg="info">{leave.leave_type}</Badge></td>
+                        <td>{formatDate(leave.start_date)}</td>
+                        <td>{formatDate(leave.end_date)}</td>
+                        <td style={{ maxWidth: '200px' }}>
+                          <small>{leave.reason || '-'}</small>
+                        </td>
+                        <td>
+                          <Badge bg={
+                            leave.status === 'Approved' ? 'success' :
+                              leave.status === 'Rejected' ? 'danger' : 'warning'
+                          }>
+                            {leave.status}
+                          </Badge>
+                        </td>
+                        <td>
+                          {leave.status === 'Pending' ? (
+                            <div className="d-flex flex-column gap-1">
+                              <div className="d-flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="success"
+                                  disabled={processingLeave}
+                                  onClick={() => handleApproveLeave(leave.id)}
+                                  aria-label={`Approve leave for ${leave.profiles?.full_name}`}
+                                >
+                                  <i className="bi bi-check-lg me-1"></i>Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  disabled={processingLeave}
+                                  onClick={() => handleRejectLeave(leave.id)}
+                                  aria-label={`Reject leave for ${leave.profiles?.full_name}`}
+                                >
+                                  <i className="bi bi-x-lg me-1"></i>Reject
+                                </Button>
+                              </div>
+                              <Form.Control
+                                size="sm"
+                                type="text"
+                                placeholder="Remarks (optional)"
+                                value={selectedLeave === leave.id ? leaveRemarks : ''}
+                                onChange={(e) => {
+                                  setSelectedLeave(leave.id);
+                                  setLeaveRemarks(e.target.value);
+                                }}
+                                onFocus={() => setSelectedLeave(leave.id)}
+                              />
+                            </div>
+                          ) : (
+                            <small className="text-muted">
+                              {leave.admin_remarks || 'No remarks'}
+                            </small>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowLeaveModal(false)}>
+                Close
+              </Button>
+            </Modal.Footer>
+          </Modal>
+
+          {/* Today's Leaves Modal */}
+          <Modal show={showTodayLeavesModal} onHide={() => setShowTodayLeavesModal(false)} size="lg">
+            <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
+              <Modal.Title><i className="bi bi-calendar-event me-2"></i>Today's Leaves ({todayLeaves.length})</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {todayLeaves.length === 0 ? (
+                <div className="text-center py-5">
+                  <p className="text-muted">No employees are on leave today.</p>
+                </div>
+              ) : (
+                <Table striped bordered hover responsive>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Employee</th>
+                      <th>Department</th>
+                      <th>Leave Type</th>
+                      <th>Period</th>
+                      <th>Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {todayLeaves.map((leave, index) => (
+                      <tr key={leave.id}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <strong>{leave.profiles?.full_name || 'N/A'}</strong>
+                          <br />
+                          <small className="text-muted">{leave.profiles?.employee_id}</small>
+                        </td>
+                        <td>{leave.profiles?.department || '-'}</td>
+                        <td><Badge bg="warning" text="dark">{leave.leave_type}</Badge></td>
+                        <td>
+                          {formatDate(leave.start_date)} to {formatDate(leave.end_date)}
+                        </td>
+                        <td style={{ maxWidth: '250px' }}>
+                          <small>{leave.reason || '-'}</small>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowTodayLeavesModal(false)}>
+                Close
+              </Button>
+            </Modal.Footer>
+          </Modal>
+
+          {/* Confirm Dialog */}
+          <ConfirmDialog
+            show={showConfirmDialog}
+            onHide={() => setShowConfirmDialog(false)}
+            onConfirm={confirmAction || (() => { })}
+            {...confirmConfig}
+          />
+        </Container>
       </div>
     </div>
   );

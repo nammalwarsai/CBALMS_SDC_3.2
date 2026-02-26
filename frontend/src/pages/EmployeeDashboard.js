@@ -10,6 +10,7 @@ import CalendarComponent from '../components/CalendarComponent';
 import Sidebar from '../components/layout/Sidebar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import BackToTop from '../components/common/BackToTop';
+import ThemeToggle from '../components/common/ThemeToggle';
 import AttendanceStatsCards from '../components/employee/AttendanceStatsCards';
 import LeaveApplicationForm from '../components/employee/LeaveApplicationForm';
 import LeaveHistoryTable from '../components/employee/LeaveHistoryTable';
@@ -348,9 +349,10 @@ const EmployeeDashboard = () => {
                 <h2><i className="bi bi-speedometer2 me-2"></i>Employee Dashboard</h2>
                 <p className="text-muted mb-0">{getGreeting()}, {user ? user.name : 'User'}! ({user?.email})</p>
               </div>
-              <div className="mt-3 mt-md-0 d-none d-lg-block">
+              <div className="mt-3 mt-md-0 d-none d-lg-flex gap-2 align-items-center">
+                <ThemeToggle />
                 <OverlayTrigger placement="bottom" overlay={<Tooltip>View and edit your profile</Tooltip>}>
-                  <Button variant="info" className="me-2" onClick={() => navigate('/profile')} aria-label="My Profile">
+                  <Button variant="info" onClick={() => navigate('/profile')} aria-label="My Profile">
                     <i className="bi bi-person me-1"></i>My Profile
                   </Button>
                 </OverlayTrigger>
@@ -388,9 +390,12 @@ const EmployeeDashboard = () => {
                   </Button>
                 </Col>
                 <Col xs={6} md={3}>
-                  <Button variant="outline-secondary" className="w-100 py-2" onClick={() => navigate('/profile')} aria-label="Update Profile">
+                  <Button variant="outline-secondary" className="w-100 py-2 mb-2" onClick={() => navigate('/profile')} aria-label="Update Profile">
                     <i className="bi bi-person-gear me-2"></i>Profile
                   </Button>
+                  <div className="d-flex justify-content-center">
+                    <ThemeToggle />
+                  </div>
                 </Col>
               </Row>
             </Card.Body>
@@ -583,7 +588,7 @@ const EmployeeDashboard = () => {
       <ConfirmDialog
         show={showConfirmDialog}
         onHide={() => setShowConfirmDialog(false)}
-        onConfirm={confirmAction || (() => {})}
+        onConfirm={confirmAction || (() => { })}
         {...confirmConfig}
       />
     </div>

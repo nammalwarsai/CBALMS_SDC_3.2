@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { Form, Button, Alert, Card, InputGroup, Spinner } from 'react-bootstrap';
 import { isValidEmail } from '../utils/validators';
 import useToast from '../hooks/useToast';
+import ThemeToggle from '../components/common/ThemeToggle';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -61,7 +62,10 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-container position-relative">
+      <div className="position-absolute top-0 end-0 p-3" style={{ zIndex: 1050 }}>
+        <ThemeToggle />
+      </div>
       <div className="w-100" style={{ maxWidth: "450px" }}>
         <Card className="auth-card">
           <Card.Body>
@@ -82,11 +86,11 @@ const Login = () => {
                 <Form.Label>
                   <i className="bi bi-envelope me-1"></i>Email Address
                 </Form.Label>
-                <Form.Control 
-                  type="email" 
-                  required 
+                <Form.Control
+                  type="email"
+                  required
                   ref={emailInputRef}
-                  value={email} 
+                  value={email}
                   onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
                   onBlur={handleEmailBlur}
                   placeholder="Enter your email"
@@ -101,18 +105,18 @@ const Login = () => {
                   <i className="bi bi-lock me-1"></i>Password
                 </Form.Label>
                 <InputGroup>
-                  <Form.Control 
+                  <Form.Control
                     type={showPassword ? 'text' : 'password'}
-                    required 
-                    value={password} 
+                    required
+                    value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Enter your password"
                     aria-label="Password"
                     autoComplete="current-password"
                   />
-                  <Button 
-                    variant="outline-secondary" 
+                  <Button
+                    variant="outline-secondary"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     tabIndex={-1}

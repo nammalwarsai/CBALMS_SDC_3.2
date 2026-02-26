@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container, Row, Col, Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import ThemeToggle from '../components/common/ThemeToggle';
 
 const LandingPage = () => {
     const features = [
@@ -61,7 +62,10 @@ const LandingPage = () => {
     ];
 
     return (
-        <div className="landing-page">
+        <div className="landing-page position-relative">
+            <div className="position-absolute top-0 end-0 p-3" style={{ zIndex: 1050 }}>
+                <ThemeToggle />
+            </div>
             {/* Hero Section */}
             <section className="hero-section text-white text-center py-5" style={{
                 background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #4338CA 100%)',

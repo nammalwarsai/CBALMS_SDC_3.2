@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import AppErrorBoundary from './components/common/ErrorBoundary';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -21,71 +22,73 @@ import './App.css';
 function App() {
   return (
     <AppErrorBoundary>
-      <AuthProvider>
-        <Router>
-          <div className="page-transition">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/employee-dashboard"
-                element={
-                  <PrivateRoute>
-                    <EmployeeDashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/admin-dashboard"
-                element={
-                  <PrivateRoute>
-                    <AdminDashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/holidays"
-                element={
-                  <PrivateRoute>
-                    <HolidayManagement />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <PrivateRoute>
-                    <Profile />
-                  </PrivateRoute>
-                }
-              />
-            </Routes>
-          </div>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="colored"
-          />
-        </Router>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router>
+            <div className="page-transition">
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <PrivateRoute>
+                      <Dashboard />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/employee-dashboard"
+                  element={
+                    <PrivateRoute>
+                      <EmployeeDashboard />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard"
+                  element={
+                    <PrivateRoute>
+                      <AdminDashboard />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/holidays"
+                  element={
+                    <PrivateRoute>
+                      <HolidayManagement />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <PrivateRoute>
+                      <Profile />
+                    </PrivateRoute>
+                  }
+                />
+              </Routes>
+            </div>
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="colored"
+            />
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
     </AppErrorBoundary>
   );
 }

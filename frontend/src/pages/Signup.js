@@ -5,6 +5,7 @@ import { Form, Button, Alert, Card, InputGroup, Spinner } from 'react-bootstrap'
 import { validatePassword, isValidEmail, isValidMobile } from '../utils/validators';
 import PasswordStrengthIndicator from '../components/common/PasswordStrengthIndicator';
 import useToast from '../hooks/useToast';
+import ThemeToggle from '../components/common/ThemeToggle';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -35,7 +36,7 @@ const Signup = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear field error on change
     if (fieldErrors[name]) {
       setFieldErrors(prev => ({ ...prev, [name]: '' }));
@@ -44,7 +45,7 @@ const Signup = () => {
 
   const validateField = (name, value) => {
     const errors = { ...fieldErrors };
-    
+
     switch (name) {
       case 'email':
         if (value && !isValidEmail(value)) errors.email = 'Invalid email format';
@@ -74,7 +75,7 @@ const Signup = () => {
       default:
         break;
     }
-    
+
     setFieldErrors(errors);
   };
 
@@ -127,7 +128,10 @@ const Signup = () => {
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-container position-relative">
+      <div className="position-absolute top-0 end-0 p-3" style={{ zIndex: 1050 }}>
+        <ThemeToggle />
+      </div>
       <div className="w-100" style={{ maxWidth: "550px" }}>
         <Card className="auth-card">
           <Card.Body>
@@ -235,8 +239,8 @@ const Signup = () => {
                     aria-label="Password"
                     autoComplete="new-password"
                   />
-                  <Button 
-                    variant="outline-secondary" 
+                  <Button
+                    variant="outline-secondary"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     tabIndex={-1}
@@ -261,8 +265,8 @@ const Signup = () => {
                     aria-label="Confirm password"
                     autoComplete="new-password"
                   />
-                  <Button 
-                    variant="outline-secondary" 
+                  <Button
+                    variant="outline-secondary"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                     tabIndex={-1}
