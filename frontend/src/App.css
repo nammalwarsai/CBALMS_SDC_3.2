@@ -799,7 +799,6 @@
 
 /* ===== Landing Page Styles ===== */
 .hero-section {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
   min-height: 80vh;
   display: flex;
   align-items: center;
@@ -862,6 +861,14 @@
 [data-bs-theme="dark"] .testimonial-card {
   background: #1F2937 !important;
   color: #F9FAFB !important;
+}
+
+[data-bs-theme="dark"] .bg-darker {
+  background-color: #111827 !important;
+}
+
+[data-bs-theme="dark"] .bg-secondary {
+  background-color: #1F2937 !important;
 }
 
 [data-bs-theme="dark"] .content-card .card-header {

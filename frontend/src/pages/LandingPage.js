@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Container, Row, Col, Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import ThemeToggle from '../components/common/ThemeToggle';
+import { ThemeContext } from '../context/ThemeContext';
 
 const LandingPage = () => {
+    const { theme } = useContext(ThemeContext);
     const features = [
         {
             icon: 'bi-clock-history',
@@ -67,8 +69,10 @@ const LandingPage = () => {
                 <ThemeToggle />
             </div>
             {/* Hero Section */}
-            <section className="hero-section text-white text-center py-5" style={{
-                background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #4338CA 100%)',
+            <section className={`hero-section text-center py-5 ${theme === 'dark' ? 'text-light' : 'text-white'}`} style={{
+                background: theme === 'dark' 
+                    ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' 
+                    : 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #4338CA 100%)',
                 minHeight: '80vh',
                 display: 'flex',
                 alignItems: 'center'
@@ -99,10 +103,10 @@ const LandingPage = () => {
                             </div>
                             {/* Trust badges */}
                             <div className="mt-5 d-flex justify-content-center gap-4 flex-wrap" style={{ opacity: 0.8 }}>
-                                <span><i className="bi bi-shield-check me-1"></i>Secure</span>
-                                <span><i className="bi bi-cloud-check me-1"></i>Cloud Based</span>
-                                <span><i className="bi bi-phone me-1"></i>Mobile Friendly</span>
-                                <span><i className="bi bi-lightning me-1"></i>Real-time</span>
+                                <span className="trust-badge"><i className="bi bi-shield-check me-1"></i>Secure</span>
+                                <span className="trust-badge"><i className="bi bi-cloud-check me-1"></i>Cloud Based</span>
+                                <span className="trust-badge"><i className="bi bi-phone me-1"></i>Mobile Friendly</span>
+                                <span className="trust-badge"><i className="bi bi-lightning me-1"></i>Real-time</span>
                             </div>
                         </Col>
                     </Row>
@@ -110,24 +114,24 @@ const LandingPage = () => {
             </section>
 
             {/* Features Section */}
-            <section className="py-5 bg-light">
+            <section className={`py-5 ${theme === 'dark' ? 'bg-dark text-light' : 'bg-light'}`}>
                 <Container>
                     <div className="text-center mb-5">
                         <h2 className="fw-bold mb-3">
                             <i className="bi bi-stars text-primary me-2"></i>Key Features
                         </h2>
-                        <p className="text-muted">Everything you need for effective attendance and leave management</p>
+                        <p className={theme === 'dark' ? 'text-light opacity-75' : 'text-muted'}>Everything you need for effective attendance and leave management</p>
                     </div>
                     <Row>
                         {features.map((feature, index) => (
                             <Col md={4} className="mb-4" key={index}>
-                                <Card className={`h-100 shadow-sm border-0 feature-card stagger-item stagger-delay-${index + 1}`}>
+                                <Card className={`h-100 shadow-sm border-0 feature-card stagger-item stagger-delay-${index + 1} ${theme === 'dark' ? 'bg-secondary text-light' : ''}`}>
                                     <Card.Body className="text-center p-4">
                                         <div className={`display-6 text-${feature.color} mb-3`}>
                                             <i className={`bi ${feature.icon}`}></i>
                                         </div>
                                         <Card.Title className="fw-bold">{feature.title}</Card.Title>
-                                        <Card.Text className="text-muted">
+                                        <Card.Text className={theme === 'dark' ? 'text-light opacity-75' : 'text-muted'}>
                                             {feature.description}
                                         </Card.Text>
                                     </Card.Body>
@@ -139,25 +143,25 @@ const LandingPage = () => {
             </section>
 
             {/* Testimonials Section */}
-            <section className="py-5">
+            <section className={`py-5 ${theme === 'dark' ? 'bg-darker text-light' : ''}`}>
                 <Container>
                     <div className="text-center mb-5">
                         <h2 className="fw-bold mb-3">
                             <i className="bi bi-chat-quote text-primary me-2"></i>What People Say
                         </h2>
-                        <p className="text-muted">Trusted by faculty and staff across departments</p>
+                        <p className={theme === 'dark' ? 'text-light opacity-75' : 'text-muted'}>Trusted by faculty and staff across departments</p>
                     </div>
                     <Row>
                         {testimonials.map((testimonial, index) => (
                             <Col md={4} className="mb-4" key={index}>
-                                <Card className="h-100 border-0 shadow-sm">
+                                <Card className={`h-100 border-0 shadow-sm ${theme === 'dark' ? 'bg-secondary text-light' : ''}`}>
                                     <Card.Body className="p-4">
                                         <div className="mb-3 text-warning">
                                             {[...Array(5)].map((_, i) => (
                                                 <i key={i} className="bi bi-star-fill me-1"></i>
                                             ))}
                                         </div>
-                                        <Card.Text className="mb-3 fst-italic text-muted">
+                                        <Card.Text className={`mb-3 fst-italic ${theme === 'dark' ? 'text-light opacity-75' : 'text-muted'}`}>
                                             "{testimonial.quote}"
                                         </Card.Text>
                                         <div className="d-flex align-items-center">
@@ -171,7 +175,7 @@ const LandingPage = () => {
                                             <div>
                                                 <strong>{testimonial.name}</strong>
                                                 <br />
-                                                <small className="text-muted">{testimonial.role}</small>
+                                                <small className={theme === 'dark' ? 'text-light opacity-75' : 'text-muted'}>{testimonial.role}</small>
                                             </div>
                                         </div>
                                     </Card.Body>
@@ -184,7 +188,9 @@ const LandingPage = () => {
 
             {/* CTA Section */}
             <section className="py-5 text-white text-center" style={{
-                background: 'linear-gradient(135deg, #1F2937 0%, #374151 100%)'
+                background: theme === 'dark' 
+                    ? 'linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%)' 
+                    : 'linear-gradient(135deg, #1F2937 0%, #374151 100%)'
             }}>
                 <Container>
                     <h3 className="fw-bold mb-3">Ready to Get Started?</h3>
@@ -198,10 +204,10 @@ const LandingPage = () => {
             </section>
 
             {/* Footer */}
-            <footer className="bg-dark text-white text-center py-4">
+            <footer className={`text-center py-4 ${theme === 'dark' ? 'bg-darker text-light border-top border-secondary' : 'bg-dark text-white'}`}>
                 <Container>
                     <p className="mb-1">&copy; 2026 CBALMS. All rights reserved.</p>
-                    <small className="text-muted">Cloud Based Attendance & Leave Management System</small>
+                    <small className={theme === 'dark' ? 'text-light opacity-75' : 'text-muted'}>Cloud Based Attendance & Leave Management System</small>
                 </Container>
             </footer>
         </div>
