@@ -11,6 +11,7 @@ import EmployeeDashboard from './pages/EmployeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import HolidayManagement from './pages/HolidayManagement';
 import Profile from './pages/Profile';
+import Notifications from './pages/Notifications';
 import PrivateRoute from './components/PrivateRoute';
 import LandingPage from './pages/LandingPage';
 import ForgotPassword from './pages/ForgotPassword';
@@ -69,6 +70,14 @@ function App() {
                   element={
                     <PrivateRoute>
                       <Profile />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/notifications"
+                  element={
+                    <PrivateRoute>
+                      <Notifications />
                     </PrivateRoute>
                   }
                 />

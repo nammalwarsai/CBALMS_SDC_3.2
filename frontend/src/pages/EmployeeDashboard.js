@@ -11,6 +11,7 @@ import Sidebar from '../components/layout/Sidebar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import BackToTop from '../components/common/BackToTop';
 import ThemeToggle from '../components/common/ThemeToggle';
+import NotificationBell from '../components/common/NotificationBell';
 import AttendanceStatsCards from '../components/employee/AttendanceStatsCards';
 import LeaveApplicationForm from '../components/employee/LeaveApplicationForm';
 import LeaveHistoryTable from '../components/employee/LeaveHistoryTable';
@@ -351,6 +352,7 @@ const EmployeeDashboard = () => {
               </div>
               <div className="mt-3 mt-md-0 d-none d-lg-flex gap-2 align-items-center">
                 <ThemeToggle />
+                <NotificationBell />
                 <OverlayTrigger placement="bottom" overlay={<Tooltip>View and edit your profile</Tooltip>}>
                   <Button variant="info" onClick={() => navigate('/profile')} aria-label="My Profile">
                     <i className="bi bi-person me-1"></i>My Profile
@@ -393,8 +395,9 @@ const EmployeeDashboard = () => {
                   <Button variant="outline-secondary" className="w-100 py-2 mb-2" onClick={() => navigate('/profile')} aria-label="Update Profile">
                     <i className="bi bi-person-gear me-2"></i>Profile
                   </Button>
-                  <div className="d-flex justify-content-center">
+                  <div className="d-flex justify-content-center gap-2">
                     <ThemeToggle />
+                    <NotificationBell />
                   </div>
                 </Col>
               </Row>

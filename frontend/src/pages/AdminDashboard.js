@@ -10,6 +10,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import AdminStatsCards from '../components/admin/AdminStatsCards';
 import EmployeeTable from '../components/admin/EmployeeTable';
 import ThemeToggle from '../components/common/ThemeToggle';
+import NotificationBell from '../components/common/NotificationBell';
 import useToast from '../hooks/useToast';
 import { formatDate } from '../utils/dateUtils';
 import { getGreeting, arrayToCSV, downloadCSV } from '../utils/helpers';
@@ -322,6 +323,7 @@ const AdminDashboard = () => {
               </div>
               <div className="mt-3 mt-md-0 d-flex gap-2 flex-wrap d-none d-lg-flex align-items-center">
                 <ThemeToggle />
+                <NotificationBell />
                 <OverlayTrigger placement="bottom" overlay={<Tooltip>View and edit your profile</Tooltip>}>
                   <Button variant="info" onClick={() => navigate('/profile')} aria-label="My Profile">
                     <i className="bi bi-person me-1"></i>My Profile
@@ -352,8 +354,9 @@ const AdminDashboard = () => {
                   <Button variant="info" className="w-100 py-2 mb-2" onClick={() => navigate('/profile')}>
                     <i className="bi bi-person me-1"></i>Profile
                   </Button>
-                  <div className="d-flex justify-content-center">
+                  <div className="d-flex justify-content-center gap-2">
                     <ThemeToggle />
+                    <NotificationBell />
                   </div>
                 </Col>
                 <Col xs={4}>

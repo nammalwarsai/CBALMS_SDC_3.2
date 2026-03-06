@@ -544,25 +544,22 @@
   transform: scale(1.08);
 }
 
-.sidebar-link-notification .badge {
-  box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.55);
-  animation: notifPing 1.8s infinite;
+/* Notification Page Styles */
+.notification-page-item {
+  transition: background-color 0.2s ease;
 }
 
-.sidebar-notification-menu {
-  border: 1px solid rgba(79, 70, 229, 0.16) !important;
-  border-radius: 14px !important;
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.16);
-  animation: menuPop 0.18s ease-out;
+.notification-page-item:hover {
+  background-color: rgba(79, 70, 229, 0.04);
 }
 
-.sidebar-notification-item {
-  transition: background-color 0.2s ease, transform 0.2s ease;
+.notification-page-unread {
+  background-color: rgba(79, 70, 229, 0.06);
+  border-left: 3px solid var(--primary-color, #4F46E5);
 }
 
-.sidebar-notification-item:hover {
-  transform: translateX(2px);
-  background-color: rgba(79, 70, 229, 0.07);
+.notification-page-item:last-child {
+  border-bottom: none !important;
 }
 
 .sidebar-logout-btn {
@@ -622,18 +619,6 @@
   }
 }
 
-@keyframes menuPop {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 @keyframes brandShimmer {
   0% {
     left: -120%;
@@ -668,20 +653,6 @@
   }
 }
 
-@keyframes notifPing {
-  0% {
-    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.45);
-  }
-
-  70% {
-    box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
-  }
-}
-
 @keyframes mobileFloat {
 
   0%,
@@ -701,7 +672,6 @@
   .sidebar-brand::after,
   .sidebar-brand-icon,
   .sidebar-avatar::after,
-  .sidebar-link-notification .badge,
   .sidebar-mobile-toggle {
     animation: none !important;
   }
@@ -925,6 +895,14 @@
 [data-bs-theme="dark"] .sidebar-offcanvas {
   background: #1F2937 !important;
   border-right-color: #374151 !important;
+}
+
+[data-bs-theme="dark"] .notification-page-unread {
+  background-color: rgba(79, 70, 229, 0.15);
+}
+
+[data-bs-theme="dark"] .notification-page-item:hover {
+  background-color: rgba(79, 70, 229, 0.1);
 }
 
 [data-bs-theme="dark"] .sidebar-user-name,
