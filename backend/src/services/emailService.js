@@ -9,8 +9,12 @@ dns.setDefaultResultOrder('ipv4first');
 const emailUser = (process.env.EMAIL_USER || '').trim();
 // Gmail app passwords are often copied with spaces; normalize to 16-char token.
 const emailAppPassword = (process.env.EMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
+const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+const emailFrom = (process.env.EMAIL_FROM || emailUser || '').trim();
 
-const isEmailConfigured = Boolean(emailUser && emailAppPassword);
+const isSmtpConfigured = Boolean(emailUser && emailAppPassword);
+const isResendConfigured = Boolean(resendApiKey && emailFrom);
+const activeProvider = isResendConfigured ? 'resend' : 'smtp';
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -33,14 +37,19 @@ const transporter = nodemailer.createTransport({
 });
 
 const verifyEmailConfig = async () => {
-    if (!isEmailConfigured) {
-        console.warn('Email service disabled: EMAIL_USER or EMAIL_APP_PASSWORD is missing.');
+    if (activeProvider === 'resend') {
+        console.log(`Email service ready (provider=resend, from=${emailFrom})`);
+        return true;
+    }
+
+    if (!isSmtpConfigured) {
+        console.warn('Email service disabled: configure RESEND_API_KEY + EMAIL_FROM or EMAIL_USER + EMAIL_APP_PASSWORD.');
         return false;
     }
 
     try {
         await transporter.verify();
-        console.log(`Email service ready for sender: ${emailUser}`);
+        console.log(`Email service ready (provider=smtp, sender=${emailUser})`);
         return true;
     } catch (error) {
         console.error('Email service verification failed:', error.message);
@@ -49,11 +58,49 @@ const verifyEmailConfig = async () => {
 };
 
 const ensureEmailReady = () => {
-    if (!isEmailConfigured) {
+    if (activeProvider === 'resend' && isResendConfigured) {
+        return true;
+    }
+
+    if (!isSmtpConfigured) {
         console.warn('Skipping email send: email credentials are not configured.');
         return false;
     }
     return true;
+};
+
+const sendViaResend = async ({ to, subject, html }) => {
+    const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            from: emailFrom,
+            to: [to],
+            subject,
+            html
+        })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Resend API error (${response.status}): ${errorText}`);
+    }
+};
+
+const sendMailWithProvider = async ({ to, subject, html }) => {
+    if (activeProvider === 'resend') {
+        return sendViaResend({ to, subject, html });
+    }
+
+    return transporter.sendMail({
+        from: `"CBALMS" <${emailUser}>`,
+        to,
+        subject,
+        html,
+    });
 };
 
 const loadTemplate = (templateName, replacements) => {
@@ -90,14 +137,11 @@ const sendLoginConfirmationEmail = async (email, userName) => {
             year: String(now.getFullYear()),
         });
 
-        const mailOptions = {
-            from: `"CBALMS" <${emailUser}>`,
+        await sendMailWithProvider({
             to: email,
             subject: 'Login Notification - CBALMS',
-            html,
-        };
-
-        await transporter.sendMail(mailOptions);
+            html
+        });
         console.log(`Login confirmation email sent to ${email}`);
     } catch (error) {
         console.error('Failed to send login confirmation email:', error.message);
@@ -129,14 +173,11 @@ const sendLogoutConfirmationEmail = async (email, userName) => {
             year: String(now.getFullYear()),
         });
 
-        const mailOptions = {
-            from: `"CBALMS" <${emailUser}>`,
+        await sendMailWithProvider({
             to: email,
             subject: 'Logout Notification - CBALMS',
-            html,
-        };
-
-        await transporter.sendMail(mailOptions);
+            html
+        });
         console.log(`Logout confirmation email sent to ${email}`);
     } catch (error) {
         console.error('Failed to send logout confirmation email:', error.message);
@@ -169,14 +210,11 @@ const sendLeaveApplicationEmail = async (email, userName, leaveDetails) => {
             year: String(now.getFullYear()),
         });
 
-        const mailOptions = {
-            from: `"CBALMS" <${emailUser}>`,
+        await sendMailWithProvider({
             to: email,
             subject: 'Leave Application Submitted - CBALMS',
-            html,
-        };
-
-        await transporter.sendMail(mailOptions);
+            html
+        });
         console.log(`Leave application email sent to ${email}`);
     } catch (error) {
         console.error('Failed to send leave application email:', error.message);
@@ -253,14 +291,11 @@ const sendLeaveStatusEmail = async (email, userName, leaveDetails) => {
             year: String(now.getFullYear()),
         });
 
-        const mailOptions = {
-            from: `"CBALMS" <${emailUser}>`,
+        await sendMailWithProvider({
             to: email,
             subject: `Leave ${status} - CBALMS`,
-            html,
-        };
-
-        await transporter.sendMail(mailOptions);
+            html
+        });
         console.log(`Leave status (${status}) email sent to ${email}`);
     } catch (error) {
         console.error('Failed to send leave status email:', error.message);
