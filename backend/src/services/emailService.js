@@ -16,10 +16,20 @@ const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
+    requireTLS: true,
+    // Prefer IPv4 on platforms where IPv6 egress is unavailable.
+    family: 4,
+    connectionTimeout: 30000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
     auth: {
         user: emailUser,
         pass: emailAppPassword,
     },
+    tls: {
+        servername: 'smtp.gmail.com',
+        minVersion: 'TLSv1.2'
+    }
 });
 
 const verifyEmailConfig = async () => {

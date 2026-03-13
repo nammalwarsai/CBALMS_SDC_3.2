@@ -23,6 +23,9 @@ for (const key of requiredEnvVars) {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Render runs behind a reverse proxy. Required for correct client IP and rate limiting.
+app.set('trust proxy', 1);
+
 // Security: HTTP headers
 app.use(helmet());
 
