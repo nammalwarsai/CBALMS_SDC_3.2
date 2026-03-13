@@ -31,7 +31,6 @@ const AdminDashboard = () => {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [pendingLeaves, setPendingLeaves] = useState([]);
   const [todayLeaves, setTodayLeaves] = useState([]);
-  const [attendanceData, setAttendanceData] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({
     totalEmployees: 0,
     presentToday: 0,
