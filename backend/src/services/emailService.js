@@ -6,15 +6,45 @@ const fs = require('fs');
 // Force Node.js to resolve DNS using IPv4 first
 dns.setDefaultResultOrder('ipv4first');
 
+const emailUser = (process.env.EMAIL_USER || '').trim();
+// Gmail app passwords are often copied with spaces; normalize to 16-char token.
+const emailAppPassword = (process.env.EMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
+
+const isEmailConfigured = Boolean(emailUser && emailAppPassword);
+
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_APP_PASSWORD,
+        user: emailUser,
+        pass: emailAppPassword,
     },
 });
+
+const verifyEmailConfig = async () => {
+    if (!isEmailConfigured) {
+        console.warn('Email service disabled: EMAIL_USER or EMAIL_APP_PASSWORD is missing.');
+        return false;
+    }
+
+    try {
+        await transporter.verify();
+        console.log(`Email service ready for sender: ${emailUser}`);
+        return true;
+    } catch (error) {
+        console.error('Email service verification failed:', error.message);
+        return false;
+    }
+};
+
+const ensureEmailReady = () => {
+    if (!isEmailConfigured) {
+        console.warn('Skipping email send: email credentials are not configured.');
+        return false;
+    }
+    return true;
+};
 
 const loadTemplate = (templateName, replacements) => {
     const templatePath = path.join(__dirname, '..', 'templates', templateName);
@@ -27,6 +57,8 @@ const loadTemplate = (templateName, replacements) => {
 
 const sendLoginConfirmationEmail = async (email, userName) => {
     try {
+        if (!ensureEmailReady()) return;
+
         const now = new Date();
         const loginDate = now.toLocaleDateString('en-US', {
             weekday: 'long',
@@ -49,7 +81,7 @@ const sendLoginConfirmationEmail = async (email, userName) => {
         });
 
         const mailOptions = {
-            from: `"CBALMS" <${process.env.EMAIL_USER}>`,
+            from: `"CBALMS" <${emailUser}>`,
             to: email,
             subject: 'Login Notification - CBALMS',
             html,
@@ -64,6 +96,8 @@ const sendLoginConfirmationEmail = async (email, userName) => {
 
 const sendLogoutConfirmationEmail = async (email, userName) => {
     try {
+        if (!ensureEmailReady()) return;
+
         const now = new Date();
         const logoutDate = now.toLocaleDateString('en-US', {
             weekday: 'long',
@@ -86,7 +120,7 @@ const sendLogoutConfirmationEmail = async (email, userName) => {
         });
 
         const mailOptions = {
-            from: `"CBALMS" <${process.env.EMAIL_USER}>`,
+            from: `"CBALMS" <${emailUser}>`,
             to: email,
             subject: 'Logout Notification - CBALMS',
             html,
@@ -101,6 +135,8 @@ const sendLogoutConfirmationEmail = async (email, userName) => {
 
 const sendLeaveApplicationEmail = async (email, userName, leaveDetails) => {
     try {
+        if (!ensureEmailReady()) return;
+
         const { leaveType, startDate, endDate, workingDays, reason } = leaveDetails;
         const now = new Date();
 
@@ -124,7 +160,7 @@ const sendLeaveApplicationEmail = async (email, userName, leaveDetails) => {
         });
 
         const mailOptions = {
-            from: `"CBALMS" <${process.env.EMAIL_USER}>`,
+            from: `"CBALMS" <${emailUser}>`,
             to: email,
             subject: 'Leave Application Submitted - CBALMS',
             html,
@@ -139,6 +175,8 @@ const sendLeaveApplicationEmail = async (email, userName, leaveDetails) => {
 
 const sendLeaveStatusEmail = async (email, userName, leaveDetails) => {
     try {
+        if (!ensureEmailReady()) return;
+
         const { leaveType, startDate, endDate, status, adminName, remarks } = leaveDetails;
         const now = new Date();
         const isApproved = status === 'Approved';
@@ -206,7 +244,7 @@ const sendLeaveStatusEmail = async (email, userName, leaveDetails) => {
         });
 
         const mailOptions = {
-            from: `"CBALMS" <${process.env.EMAIL_USER}>`,
+            from: `"CBALMS" <${emailUser}>`,
             to: email,
             subject: `Leave ${status} - CBALMS`,
             html,
@@ -219,4 +257,4 @@ const sendLeaveStatusEmail = async (email, userName, leaveDetails) => {
     }
 };
 
-module.exports = { sendLoginConfirmationEmail, sendLogoutConfirmationEmail, sendLeaveApplicationEmail, sendLeaveStatusEmail };
+module.exports = { sendLoginConfirmationEmail, sendLogoutConfirmationEmail, sendLeaveApplicationEmail, sendLeaveStatusEmail, verifyEmailConfig };

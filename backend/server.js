@@ -33,19 +33,37 @@ app.use(requestId);
 morgan.token('request-id', (req) => req.requestId);
 app.use(morgan(':request-id :method :url :status :response-time ms'));
 
-// 3.7: CORS with multi-origin support for production
+// 3.7: CORS with normalized multi-origin support for production
+const normalizeOrigin = (value = '') => value.trim().replace(/\/$/, '').toLowerCase();
+
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
   .split(',')
-  .map(origin => origin.trim());
+  .map(origin => normalizeOrigin(origin))
+  .filter(Boolean);
+
+const isOriginAllowed = (requestOrigin) => {
+  const normalizedRequestOrigin = normalizeOrigin(requestOrigin);
+  return allowedOrigins.some((allowed) => {
+    // Support wildcard patterns from env, e.g. https://*.vercel.app
+    if (allowed.includes('*')) {
+      const regex = new RegExp(`^${allowed.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`);
+      return regex.test(normalizedRequestOrigin);
+    }
+    return allowed === normalizedRequestOrigin;
+  });
+};
+
+console.log('CORS allowed origins:', allowedOrigins);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (server-to-server, curl, etc.)
+    // Allow requests with no origin (server-to-server, curl, health checks, etc.)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    // Return false instead of throwing to avoid 500 responses on CORS rejections.
+    return callback(null, false);
   },
   credentials: true
 }));
@@ -98,6 +116,10 @@ app.use(errorHandler);
 // Test Supabase connection on startup (non-blocking)
 const { testConnection } = require('./src/config/supabaseClient');
 testConnection();
+
+// Verify SMTP/email configuration on startup (non-blocking)
+const { verifyEmailConfig } = require('./src/services/emailService');
+verifyEmailConfig();
 
 // 3.8: Start server with graceful shutdown
 const server = app.listen(PORT, () => {
