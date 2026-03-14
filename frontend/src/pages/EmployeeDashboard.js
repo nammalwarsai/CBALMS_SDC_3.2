@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useCallback, useContext, useState, useEffect, useMemo, Suspense } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Row, Col, Card, Button, Table, Badge, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -228,6 +228,10 @@ const EmployeeDashboard = () => {
     setShowConfirmDialog(true);
   };
 
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
+  }, []);
+
   const handleCheckIn = async () => {
     try {
       await attendanceService.checkIn();
@@ -338,7 +342,7 @@ const EmployeeDashboard = () => {
   return (
     <div className="d-flex">
       {/* Sidebar */}
-      <Sidebar user={user} onLogout={handleLogout} isAdmin={false} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <Sidebar user={user} onLogout={handleLogout} isAdmin={false} collapsed={sidebarCollapsed} onToggle={handleSidebarToggle} />
 
       {/* Main Content */}
       <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>

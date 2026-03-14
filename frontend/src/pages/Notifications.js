@@ -106,6 +106,10 @@ const Notifications = () => {
     setShowConfirmDialog(true);
   };
 
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
+  }, []);
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'leave_request': return 'bi-envelope-paper text-primary';
@@ -132,7 +136,7 @@ const Notifications = () => {
 
   return (
     <div className="d-flex">
-      <Sidebar user={user} onLogout={handleLogout} isAdmin={isAdmin} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <Sidebar user={user} onLogout={handleLogout} isAdmin={isAdmin} collapsed={sidebarCollapsed} onToggle={handleSidebarToggle} />
 
       <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>
         <Container fluid className={`mt-4 px-4 pb-4 dashboard-main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>

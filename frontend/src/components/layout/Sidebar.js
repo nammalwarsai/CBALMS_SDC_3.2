@@ -1,37 +1,40 @@
-import React, { useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { Nav, Button, Offcanvas } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getInitials } from '../../utils/helpers';
+
+const EMPLOYEE_LINKS = [
+  { path: '/employee-dashboard', icon: 'bi-speedometer2', label: 'Dashboard' },
+  { path: '/notifications', icon: 'bi-bell', label: 'Notifications' },
+  { path: '/profile', icon: 'bi-person', label: 'My Profile' },
+];
+
+const ADMIN_LINKS = [
+  { path: '/admin-dashboard', icon: 'bi-speedometer2', label: 'Dashboard' },
+  { path: '/holidays', icon: 'bi-calendar-heart', label: 'Holidays' },
+  { path: '/notifications', icon: 'bi-bell', label: 'Notifications' },
+  { path: '/profile', icon: 'bi-person', label: 'My Profile' },
+];
 
 const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMobile, setShowMobile] = useState(false);
 
-  const employeeLinks = [
-    { path: '/employee-dashboard', icon: 'bi-speedometer2', label: 'Dashboard' },
-    { path: '/notifications', icon: 'bi-bell', label: 'Notifications' },
-    { path: '/profile', icon: 'bi-person', label: 'My Profile' },
-  ];
+  const links = useMemo(() => (isAdmin ? ADMIN_LINKS : EMPLOYEE_LINKS), [isAdmin]);
 
-  const adminLinks = [
-    { path: '/admin-dashboard', icon: 'bi-speedometer2', label: 'Dashboard' },
-    { path: '/holidays', icon: 'bi-calendar-heart', label: 'Holidays' },
-    { path: '/notifications', icon: 'bi-bell', label: 'Notifications' },
-    { path: '/profile', icon: 'bi-person', label: 'My Profile' },
-  ];
-
-  const links = isAdmin ? adminLinks : employeeLinks;
-
-  const handleNav = (path) => {
+  const handleNav = useCallback((path) => {
     navigate(path);
     setShowMobile(false);
-  };
+  }, [navigate]);
+
+  const openMobileSidebar = useCallback(() => setShowMobile(true), []);
+  const closeMobileSidebar = useCallback(() => setShowMobile(false), []);
 
   const SidebarContent = () => (
     <div className="sidebar-content d-flex flex-column h-100">
       {/* User Info */}
-      <div className="sidebar-user-info text-center p-3 mb-2">
+      <div className="sidebar-user-info sidebar-user-info-card text-center p-3 mb-2">
         <div className="sidebar-avatar mx-auto mb-2">
           {user?.profilePhotoUrl ? (
             <img src={user.profilePhotoUrl} alt="Profile" className="sidebar-avatar-image rounded-circle" style={{ width: 60, height: 60, objectFit: 'cover' }} />
@@ -110,7 +113,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
         variant="primary"
         className="sidebar-toggle sidebar-mobile-toggle d-lg-none position-fixed"
         style={{ top: '1rem', left: '1rem', zIndex: 1050 }}
-        onClick={() => setShowMobile(true)}
+        onClick={openMobileSidebar}
         aria-label="Toggle navigation menu"
       >
         <i className="bi bi-list"></i>
@@ -119,7 +122,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
       {/* Mobile Offcanvas Sidebar */}
       <Offcanvas
         show={showMobile}
-        onHide={() => setShowMobile(false)}
+        onHide={closeMobileSidebar}
         className="d-lg-none sidebar-offcanvas"
         style={{ width: '260px' }}
       >
@@ -137,7 +140,7 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
       <div className="sidebar-desktop sidebar-desktop-shell d-none d-lg-flex flex-column" style={{
         width: '250px',
         minHeight: '100vh',
-        background: 'white',
+        background: 'var(--card-bg, white)',
         borderRight: '1px solid #E5E7EB',
         position: 'fixed',
         top: 0,
@@ -170,4 +173,14 @@ const Sidebar = ({ user, onLogout, isAdmin = false, collapsed = false, onToggle 
   );
 };
 
-export default Sidebar;
+const areSidebarPropsEqual = (prevProps, nextProps) => (
+  prevProps.isAdmin === nextProps.isAdmin &&
+  prevProps.collapsed === nextProps.collapsed &&
+  prevProps.user?.id === nextProps.user?.id &&
+  prevProps.user?.name === nextProps.user?.name &&
+  prevProps.user?.profilePhotoUrl === nextProps.user?.profilePhotoUrl &&
+  prevProps.onLogout === nextProps.onLogout &&
+  prevProps.onToggle === nextProps.onToggle
+);
+
+export default memo(Sidebar, areSidebarPropsEqual);
