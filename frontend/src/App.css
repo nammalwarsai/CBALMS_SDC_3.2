@@ -1268,3 +1268,51 @@
 .spinner-border {
   animation-duration: 0.65s;
 }
+
+/* ===== Settings Page ===== */
+.settings-card {
+  transition: all var(--transition-smooth);
+}
+
+.settings-card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+.settings-item {
+  transition: background-color 0.2s ease;
+}
+
+.settings-item:hover {
+  background-color: rgba(var(--bs-primary-rgb, 79, 70, 229), 0.04);
+  border-radius: var(--radius-md);
+}
+
+.settings-item h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.settings-item small {
+  font-size: 0.82rem;
+}
+
+.settings-card .form-check-input:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.settings-card .form-select {
+  border-radius: var(--radius-md);
+  border-color: var(--border-color);
+}
+
+[data-bs-theme="dark"] .settings-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .settings-card .form-select {
+  background-color: #1E293B;
+  color: #F1F5F9;
+  border-color: #334155;
+}

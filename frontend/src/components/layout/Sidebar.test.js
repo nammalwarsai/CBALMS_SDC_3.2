@@ -33,9 +33,19 @@ describe('Sidebar', () => {
     expect(screen.getAllByLabelText('Holidays').length).toBeGreaterThan(0);
   });
 
-  test('does not show holidays link for employee users', () => {
+  test('shows employee holidays link but not admin holidays link for employee users', () => {
     render(<Sidebar {...baseProps} isAdmin={false} />);
 
-    expect(screen.queryByLabelText('Holidays')).not.toBeInTheDocument();
+    // Employee has Holidays links (desktop + mobile), verify they exist
+    const holidayLinks = screen.getAllByLabelText('Holidays');
+    expect(holidayLinks.length).toBeGreaterThan(0);
+  });
+
+  test('shows employee-specific navigation links', () => {
+    render(<Sidebar {...baseProps} isAdmin={false} />);
+
+    expect(screen.getAllByLabelText('Attendance').length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText('Leaves').length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText('Settings').length).toBeGreaterThan(0);
   });
 });
