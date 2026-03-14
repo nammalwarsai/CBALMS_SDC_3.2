@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { Container, Card, Table, Button, Form, Modal, Badge, Spinner } from 'react-bootstrap';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -20,11 +20,7 @@ const HolidayManagement = () => {
   const [formData, setFormData] = useState({ name: '', date: '', type: 'public' });
   const [seeding, setSeeding] = useState(false);
 
-  useEffect(() => {
-    fetchHolidays();
-  }, [selectedYear]);
-
-  const fetchHolidays = async () => {
+  const fetchHolidays = useCallback(async () => {
     try {
       setLoading(true);
       const response = await holidayService.getHolidays(selectedYear);
@@ -35,7 +31,11 @@ const HolidayManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedYear, toast]);
+
+  useEffect(() => {
+    fetchHolidays();
+  }, [fetchHolidays]);
 
   const handleAdd = async (e) => {
     e.preventDefault();

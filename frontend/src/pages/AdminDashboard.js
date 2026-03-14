@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Row, Col, Card, Button, Table, Badge, Form, Modal, Spinner, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -51,13 +51,7 @@ const AdminDashboard = () => {
   const [processingLeave, setProcessingLeave] = useState(false);
   const [leaveFilter, setLeaveFilter] = useState('Pending');
 
-  useEffect(() => {
-    fetchEmployees();
-    fetchDashboardStats();
-    fetchPendingLeaves();
-  }, []);
-
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     try {
       const data = await adminService.getDashboardStats();
       setDashboardStats(data.data || {
@@ -70,9 +64,9 @@ const AdminDashboard = () => {
       console.error("Error fetching dashboard stats", error);
       toast.error('Failed to fetch dashboard stats');
     }
-  };
+  }, [toast]);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       const data = await adminService.getAllEmployees();
       setEmployees(data.data || []);
@@ -82,16 +76,22 @@ const AdminDashboard = () => {
       toast.error('Failed to fetch employees');
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchPendingLeaves = async () => {
+  const fetchPendingLeaves = useCallback(async () => {
     try {
       const response = await leaveService.getAllLeaves('Pending');
       setPendingLeaves(response.data || []);
     } catch (error) {
       console.error("Error fetching pending leaves", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+    fetchDashboardStats();
+    fetchPendingLeaves();
+  }, [fetchEmployees, fetchDashboardStats, fetchPendingLeaves]);
 
   const fetchAllLeaves = async (status = null) => {
     try {

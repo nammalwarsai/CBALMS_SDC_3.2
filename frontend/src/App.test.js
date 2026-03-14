@@ -1,8 +1,13 @@
 import { render, screen } from '@testing-library/react';
-import App from './App';
+import { ThemeProvider } from './context/ThemeContext';
+import ThemeToggle from './components/common/ThemeToggle';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('renders theme toggle button', () => {
+  render(
+    <ThemeProvider>
+      <ThemeToggle />
+    </ThemeProvider>
+  );
+  const toggleButton = screen.getByRole('button', { name: /toggle dark mode/i });
+  expect(toggleButton).toBeInTheDocument();
 });
