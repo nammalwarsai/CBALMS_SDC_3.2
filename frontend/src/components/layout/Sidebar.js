@@ -5,8 +5,12 @@ import { getInitials } from '../../utils/helpers';
 
 const EMPLOYEE_LINKS = [
   { path: '/employee-dashboard', icon: 'bi-speedometer2', label: 'Dashboard' },
+  { path: '/employee-dashboard/attendance', icon: 'bi-list-check', label: 'Attendance' },
+  { path: '/employee-dashboard/leaves', icon: 'bi-calendar-plus', label: 'Leaves' },
+  { path: '/employee-dashboard/holidays', icon: 'bi-calendar-heart', label: 'Holidays' },
   { path: '/notifications', icon: 'bi-bell', label: 'Notifications' },
   { path: '/profile', icon: 'bi-person', label: 'My Profile' },
+  { path: '/employee-dashboard/settings', icon: 'bi-gear', label: 'Settings' },
 ];
 
 const ADMIN_LINKS = [

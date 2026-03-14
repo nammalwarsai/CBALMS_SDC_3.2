@@ -8,6 +8,11 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
+import EmployeeLeaves from './pages/EmployeeLeaves';
+import EmployeeAttendance from './pages/EmployeeAttendance';
+import EmployeeHolidays from './pages/EmployeeHolidays';
+import Settings from './pages/Settings';
+import EmployeeLayout from './components/layout/EmployeeLayout';
 import AdminDashboard from './pages/AdminDashboard';
 import HolidayManagement from './pages/HolidayManagement';
 import Profile from './pages/Profile';
@@ -45,10 +50,16 @@ function App() {
                   path="/employee-dashboard"
                   element={
                     <PrivateRoute>
-                      <EmployeeDashboard />
+                      <EmployeeLayout />
                     </PrivateRoute>
                   }
-                />
+                >
+                  <Route index element={<EmployeeDashboard />} />
+                  <Route path="leaves" element={<EmployeeLeaves />} />
+                  <Route path="attendance" element={<EmployeeAttendance />} />
+                  <Route path="holidays" element={<EmployeeHolidays />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
                 <Route
                   path="/admin-dashboard"
                   element={
