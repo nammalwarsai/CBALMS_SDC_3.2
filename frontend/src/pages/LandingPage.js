@@ -81,7 +81,7 @@ const LandingPage = () => {
                     <Row className="justify-content-center align-items-center">
                         <Col lg={8} className="animate-fade-in">
                             <div className="mb-4">
-                                <i className="bi bi-cloud-check" style={{ fontSize: '4rem', opacity: 0.9 }}></i>
+                                <i className="bi bi-cloud-check hero-icon-float" style={{ fontSize: '4rem', opacity: 0.9 }}></i>
                             </div>
                             <h1 className="display-4 fw-bold mb-4">
                                 Cloud Based Attendance & Leave Management Portal
