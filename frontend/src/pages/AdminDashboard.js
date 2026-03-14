@@ -143,6 +143,10 @@ const AdminDashboard = () => {
     setShowConfirmDialog(true);
   };
 
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
+  }, []);
+
   const handleViewDetails = async (employeeId) => {
     try {
       const details = await adminService.getEmployeeDetails(employeeId);
@@ -308,7 +312,7 @@ const AdminDashboard = () => {
   return (
     <div className="d-flex">
       {/* Sidebar */}
-      <Sidebar user={user} onLogout={handleLogout} isAdmin={true} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <Sidebar user={user} onLogout={handleLogout} isAdmin={true} collapsed={sidebarCollapsed} onToggle={handleSidebarToggle} />
 
       {/* Main Content */}
       <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>

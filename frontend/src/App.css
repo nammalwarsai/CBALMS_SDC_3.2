@@ -580,7 +580,7 @@
   width: 70%;
   height: 100%;
   background: linear-gradient(120deg, transparent, rgba(79, 70, 229, 0.12), transparent);
-  animation: brandShimmer 3.6s linear infinite;
+  animation: brandShimmer 1.6s ease-out 1;
 }
 
 .sidebar-brand-icon {
@@ -598,7 +598,13 @@
   inset: -4px;
   border-radius: 50%;
   border: 1px solid rgba(79, 70, 229, 0.22);
-  animation: avatarRing 2.5s ease-out infinite;
+  animation: avatarRing 1.6s ease-out 1;
+}
+
+.sidebar-user-info-card {
+  border-radius: 14px;
+  margin: 0.25rem 0.5rem 0.5rem;
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.08), rgba(79, 70, 229, 0.03));
 }
 
 .sidebar-avatar-image,
@@ -725,7 +731,7 @@
 }
 
 .sidebar-mobile-toggle {
-  animation: mobileFloat 2.6s ease-in-out infinite;
+  animation: mobileFloat 2.6s ease-in-out 1;
 }
 
 .sidebar-collapse-btn {
@@ -1134,6 +1140,21 @@
 
 [data-bs-theme="dark"] .sidebar-divider {
   border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .sidebar-user-info-card {
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.08));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-desktop-shell,
+  .sidebar-link,
+  .sidebar-brand::after,
+  .sidebar-brand-icon,
+  .sidebar-avatar::after,
+  .sidebar-mobile-toggle {
+    animation: none !important;
+  }
 }
 
 [data-bs-theme="dark"] .react-calendar {
