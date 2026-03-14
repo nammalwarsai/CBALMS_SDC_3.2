@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import { Row, Col, Card, Form, Button, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -35,10 +35,6 @@ const Settings = () => {
   const toast = useToast();
   const [settings, setSettings] = useState(loadSettings);
   const [dirty, setDirty] = useState(false);
-
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
 
   const handleToggle = (key) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
