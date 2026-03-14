@@ -41,11 +41,6 @@ const Settings = () => {
     setDirty(true);
   };
 
-  const handleSelectChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    setDirty(true);
-  };
-
   const handleSave = () => {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -119,104 +114,11 @@ const Settings = () => {
           </Card>
         </Col>
 
-        {/* Notifications */}
-        <Col lg={6} className="mb-4">
-          <Card className="content-card settings-card h-100">
-            <Card.Header>
-              <i className="bi bi-bell me-2"></i><strong>Notifications</strong>
-            </Card.Header>
-            <Card.Body>
-              <div className="settings-item d-flex justify-content-between align-items-center py-3 border-bottom">
-                <div>
-                  <h6 className="mb-1">Email Notifications</h6>
-                  <small className="text-muted">Receive email alerts for important updates</small>
-                </div>
-                <Form.Check
-                  type="switch"
-                  id="email-notifications-switch"
-                  checked={settings.emailNotifications}
-                  onChange={() => handleToggle('emailNotifications')}
-                  label=""
-                  aria-label="Toggle email notifications"
-                />
-              </div>
-              <div className="settings-item d-flex justify-content-between align-items-center py-3 border-bottom">
-                <div>
-                  <h6 className="mb-1">Leave Alerts</h6>
-                  <small className="text-muted">Get notified about leave approvals and rejections</small>
-                </div>
-                <Form.Check
-                  type="switch"
-                  id="leave-alerts-switch"
-                  checked={settings.leaveAlerts}
-                  onChange={() => handleToggle('leaveAlerts')}
-                  label=""
-                  aria-label="Toggle leave alerts"
-                />
-              </div>
-              <div className="settings-item d-flex justify-content-between align-items-center py-3 border-bottom">
-                <div>
-                  <h6 className="mb-1">Attendance Reminders</h6>
-                  <small className="text-muted">Daily reminders to check in and check out</small>
-                </div>
-                <Form.Check
-                  type="switch"
-                  id="attendance-reminders-switch"
-                  checked={settings.attendanceReminders}
-                  onChange={() => handleToggle('attendanceReminders')}
-                  label=""
-                  aria-label="Toggle attendance reminders"
-                />
-              </div>
-              <div className="settings-item d-flex justify-content-between align-items-center py-3">
-                <div>
-                  <h6 className="mb-1">Holiday Alerts</h6>
-                  <small className="text-muted">Get notified about upcoming holidays</small>
-                </div>
-                <Form.Check
-                  type="switch"
-                  id="holiday-alerts-switch"
-                  checked={settings.holidayAlerts}
-                  onChange={() => handleToggle('holidayAlerts')}
-                  label=""
-                  aria-label="Toggle holiday alerts"
-                />
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
       </Row>
 
       <Row>
-        {/* Data & Export */}
-        <Col lg={6} className="mb-4">
-          <Card className="content-card settings-card h-100">
-            <Card.Header>
-              <i className="bi bi-download me-2"></i><strong>Data &amp; Export</strong>
-            </Card.Header>
-            <Card.Body>
-              <div className="settings-item d-flex justify-content-between align-items-center py-3">
-                <div>
-                  <h6 className="mb-1">Default Export Format</h6>
-                  <small className="text-muted">Preferred format when exporting attendance reports</small>
-                </div>
-                <Form.Select
-                  size="sm"
-                  style={{ width: '120px' }}
-                  value={settings.defaultExportFormat}
-                  onChange={(e) => handleSelectChange('defaultExportFormat', e.target.value)}
-                  aria-label="Default export format"
-                >
-                  <option value="pdf">PDF</option>
-                  <option value="csv">CSV</option>
-                </Form.Select>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-
         {/* Account */}
-        <Col lg={6} className="mb-4">
+        <Col lg={12} className="mb-4">
           <Card className="content-card settings-card h-100">
             <Card.Header>
               <i className="bi bi-person-gear me-2"></i><strong>Account</strong>
