@@ -277,7 +277,7 @@ CBALMS_SDC_3.2/
 - `GET /attendance-list?type=present|absent`
 - `GET /employees`
 - `GET /employees/:id`
-- `GET /reports?type=daily|monthly&date=YYYY-MM-DD`
+- `GET /reports?type=daily&date=2026-03-15` or `GET /reports?type=monthly&date=2026-03-01`
 
 ---
 
