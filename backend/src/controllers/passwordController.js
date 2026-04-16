@@ -6,7 +6,7 @@ const passwordController = {
       const { email } = req.body;
 
       // Use the deployed frontend URL; fall back to localhost only for local dev
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const frontendUrl = process.env.FRONTEND_URL;
       const redirectTo = `${frontendUrl.replace(/\/$/, '')}/reset-password`;
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
