@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [leaveRemarks, setLeaveRemarks] = useState('');
-  const [processingLeave, setProcessingLeave] = useState(false);
+const [processingLeave, setProcessingLeave] = useState(false);
   const [leaveFilter, setLeaveFilter] = useState('Pending');
 
   const fetchDashboardStats = useCallback(async () => {

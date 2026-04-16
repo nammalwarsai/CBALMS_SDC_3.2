@@ -71,7 +71,7 @@ const Login = () => {
           <Card.Body>
             <div className="text-center mb-4">
               <div className="mb-3">
-                <i className="bi bi-cloud-check text-primary" style={{ fontSize: '2.5rem' }}></i>
+                <i className="bi bi-cloud-check text-primary" style={{ fontSize: '2.6rem' }}></i>
               </div>
               <h2>Welcome Back</h2>
               <p className="text-muted">Please login to your account</p>

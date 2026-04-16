@@ -4,14 +4,19 @@ const passwordController = {
   async forgotPassword(req, res, next) {
     try {
       const { email } = req.body;
-      const redirectTo = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password`;
+
+      // Use the deployed frontend URL; fall back to localhost only for local dev
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const redirectTo = `${frontendUrl.replace(/\/$/, '')}/reset-password`;
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
       if (error) {
-        return res.status(400).json({ error: error.message });
+        // Don't reveal whether the email exists - always return success
+        console.error('Supabase resetPasswordForEmail error:', error.message);
       }
 
+      // Always return success to prevent email enumeration
       return res.status(200).json({
         message: 'If an account exists for this email, a password reset link has been sent.'
       });
