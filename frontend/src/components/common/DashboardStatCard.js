@@ -10,28 +10,23 @@ const DashboardStatCard = ({
   label,
   hint,
   onClick,
-  ariaLabel
+  ariaLabel,
+  disabled = false
 }) => {
   if (loading) return <StatCardSkeleton />;
 
-  const isInteractive = typeof onClick === 'function';
-
-  const onKeyDown = (event) => {
-    if (!isInteractive) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onClick();
-    }
-  };
+  const isClickable = typeof onClick === 'function';
+  const isInteractive = isClickable && !disabled;
 
   return (
     <Card
-      className={`ds-stat-card ds-stat-card--${variant} text-center ${isInteractive ? 'ds-stat-card--interactive' : ''}`}
-      onClick={onClick}
-      role={isInteractive ? 'button' : undefined}
-      tabIndex={isInteractive ? 0 : undefined}
-      onKeyDown={onKeyDown}
+      className={`ds-stat-card ds-stat-card--${variant} text-center ${isClickable ? 'ds-stat-card--clickable' : ''} ${isInteractive ? 'ds-stat-card--interactive' : ''}`}
+      as={isClickable ? 'button' : 'div'}
+      type={isClickable ? 'button' : undefined}
+      onClick={isClickable ? onClick : undefined}
+      disabled={isClickable ? disabled : undefined}
       aria-label={ariaLabel}
+      aria-disabled={isClickable && disabled ? 'true' : undefined}
     >
       <Card.Body>
         {icon && <div className="mb-2"><i className={`bi ${icon} ds-stat-card__icon`}></i></div>}
