@@ -24,6 +24,7 @@ import ResetPassword from './pages/ResetPassword';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
+import './styles/designSystem.css';
 
 function App() {
   return (

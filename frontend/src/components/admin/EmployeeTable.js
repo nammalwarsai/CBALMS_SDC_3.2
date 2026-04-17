@@ -28,20 +28,20 @@ const EmployeeTable = ({ employees, loading, onViewDetails, onExportCSV, onDownl
   }, [employees, searchTerm, departmentFilter]);
 
   return (
-    <Card className="content-card">
+    <Card className="content-card ds-surface">
       <Card.Header className="d-flex justify-content-between align-items-center flex-wrap">
         <strong><i className="bi bi-people me-2"></i>All Employees</strong>
         <div className="d-flex gap-2 align-items-center mt-2 mt-md-0">
-          <Button variant="outline-success" size="sm" onClick={onExportCSV} aria-label="Export Employees CSV">
+          <Button variant="outline-success" size="sm" className="ds-action-btn" onClick={onExportCSV} aria-label="Export Employees CSV">
             <i className="bi bi-filetype-csv me-1"></i>CSV
           </Button>
-          <Button variant="outline-primary" size="sm" onClick={() => onDownloadReport('daily')} aria-label="Download Daily Report">
+          <Button variant="outline-primary" size="sm" className="ds-action-btn" onClick={() => onDownloadReport('daily')} aria-label="Download Daily Report">
             <i className="bi bi-file-pdf me-1"></i>Daily
           </Button>
-          <Button variant="outline-info" size="sm" onClick={() => onDownloadReport('monthly')} aria-label="Download Monthly Report">
+          <Button variant="outline-info" size="sm" className="ds-action-btn" onClick={() => onDownloadReport('monthly')} aria-label="Download Monthly Report">
             <i className="bi bi-file-pdf me-1"></i>Monthly
           </Button>
-          <span className="badge bg-primary ms-2">{filteredEmployees.length} of {employees.length}</span>
+          <span className="badge bg-primary ms-2 ds-chip-count">{filteredEmployees.length} of {employees.length}</span>
         </div>
       </Card.Header>
       <Card.Body>
@@ -70,7 +70,7 @@ const EmployeeTable = ({ employees, loading, onViewDetails, onExportCSV, onDownl
           </Col>
           {(searchTerm || departmentFilter) && (
             <Col md={2} lg={2}>
-              <Button variant="outline-secondary" className="w-100" onClick={() => { setSearchTerm(''); setDepartmentFilter(''); }}>
+              <Button variant="outline-secondary" className="w-100 ds-action-btn" onClick={() => { setSearchTerm(''); setDepartmentFilter(''); }}>
                 <i className="bi bi-x-lg me-1"></i>Clear
               </Button>
             </Col>
@@ -78,12 +78,12 @@ const EmployeeTable = ({ employees, loading, onViewDetails, onExportCSV, onDownl
         </Row>
 
         {loading ? (
-          <Table striped bordered hover responsive>
+          <Table striped bordered hover responsive className="ds-table">
             <thead><tr><th>Name</th><th>Department</th><th>Employee ID</th><th>Mobile</th><th>Status</th><th>Action</th></tr></thead>
             <tbody><TableRowSkeleton columns={6} rows={5} /></tbody>
           </Table>
         ) : (
-          <Table striped bordered hover responsive>
+          <Table striped bordered hover responsive className="ds-table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -113,6 +113,7 @@ const EmployeeTable = ({ employees, loading, onViewDetails, onExportCSV, onDownl
                       <Button
                         size="sm"
                         variant="info"
+                        className="ds-action-btn"
                         onClick={() => onViewDetails(emp.id)}
                         aria-label={`View details for ${emp.full_name}`}
                       >

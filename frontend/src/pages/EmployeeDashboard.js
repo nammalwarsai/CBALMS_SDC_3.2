@@ -169,17 +169,17 @@ const EmployeeDashboard = () => {
   return (
     <>
       {/* Header */}
-      <div className="dashboard-header">
+      <div className="dashboard-header ds-header mb-4">
         <div className="d-flex justify-content-between align-items-center flex-wrap">
           <div>
-            <h2><i className="bi bi-speedometer2 me-2"></i>Employee Dashboard</h2>
-            <p className="text-muted mb-0">{getGreeting()}, {user ? user.name : 'User'}! ({user?.email})</p>
+            <h2 className="ds-title"><i className="bi bi-speedometer2 me-2"></i>Employee Dashboard</h2>
+            <p className="mb-0 ds-subtitle">{getGreeting()}, {user ? user.name : 'User'}! ({user?.email})</p>
           </div>
-          <div className="mt-3 mt-md-0 d-none d-lg-flex gap-2 align-items-center">
+          <div className="mt-3 mt-md-0 d-none d-lg-flex ds-header-actions align-items-center">
             <ThemeToggle />
             <NotificationBell />
             <OverlayTrigger placement="bottom" overlay={<Tooltip>View and edit your profile</Tooltip>}>
-              <Button variant="info" onClick={() => navigate('/profile')} aria-label="My Profile">
+              <Button variant="info" className="ds-action-btn" onClick={() => navigate('/profile')} aria-label="My Profile">
                 <i className="bi bi-person me-1"></i>My Profile
               </Button>
             </OverlayTrigger>
@@ -188,13 +188,13 @@ const EmployeeDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <Card className="content-card mb-4" role="navigation" aria-label="Quick actions">
+      <Card className="content-card ds-surface mb-4" role="navigation" aria-label="Quick actions">
         <Card.Body className="py-3">
-          <Row className="text-center">
+          <Row className="text-center g-2">
             <Col xs={6} md={3} className="mb-2 mb-md-0">
               <Button
                 variant={canCheckIn ? 'success' : canCheckOut ? 'warning' : 'secondary'}
-                className="w-100 py-2"
+                className="w-100 py-2 ds-action-btn"
                 onClick={canCheckIn ? handleCheckIn : canCheckOut ? handleCheckOut : undefined}
                 disabled={!canCheckIn && !canCheckOut}
                 aria-label={canCheckIn ? 'Check In' : canCheckOut ? 'Check Out' : 'Attendance Status'}
@@ -204,17 +204,17 @@ const EmployeeDashboard = () => {
               </Button>
             </Col>
             <Col xs={6} md={3} className="mb-2 mb-md-0">
-              <Button variant="outline-primary" className="w-100 py-2" onClick={() => navigate('/employee-dashboard/leaves')} aria-label="Apply for Leave">
+              <Button variant="outline-primary" className="w-100 py-2 ds-action-btn" onClick={() => navigate('/employee-dashboard/leaves')} aria-label="Apply for Leave">
                 <i className="bi bi-calendar-plus me-2"></i>Apply Leave
               </Button>
             </Col>
             <Col xs={6} md={3}>
-              <Button variant="outline-info" className="w-100 py-2" onClick={() => navigate('/employee-dashboard/attendance')} aria-label="View Attendance">
+              <Button variant="outline-info" className="w-100 py-2 ds-action-btn" onClick={() => navigate('/employee-dashboard/attendance')} aria-label="View Attendance">
                 <i className="bi bi-list-check me-2"></i>Attendance
               </Button>
             </Col>
             <Col xs={6} md={3}>
-              <Button variant="outline-secondary" className="w-100 py-2" onClick={() => navigate('/employee-dashboard/holidays')} aria-label="View Holidays">
+              <Button variant="outline-secondary" className="w-100 py-2 ds-action-btn" onClick={() => navigate('/employee-dashboard/holidays')} aria-label="View Holidays">
                 <i className="bi bi-calendar-heart me-2"></i>Holidays
               </Button>
             </Col>
@@ -233,7 +233,7 @@ const EmployeeDashboard = () => {
       />
 
       {/* Charts Section - lazy loaded */}
-      <Suspense fallback={<div className="text-center py-4"><Spinner animation="border" variant="primary" /><p className="text-muted mt-2">Loading charts...</p></div>}>
+      <Suspense fallback={<div className="text-center py-4 ds-surface ds-loading rounded-4"><Spinner animation="border" variant="primary" /><p className="text-muted mt-2 mb-0">Loading charts...</p></div>}>
         <ChartSection leaveUsageData={leaveUsageData} monthlyAttendanceData={monthlyAttendanceData} />
       </Suspense>
     </>

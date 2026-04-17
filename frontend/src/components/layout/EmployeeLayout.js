@@ -34,7 +34,7 @@ const EmployeeLayout = () => {
   }, []);
 
   return (
-    <div className="d-flex">
+    <div className="d-flex ds-page-shell">
       <Sidebar
         user={user}
         onLogout={handleLogout}
@@ -43,10 +43,10 @@ const EmployeeLayout = () => {
         onToggle={handleSidebarToggle}
       />
 
-      <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>
+      <div className="main-content flex-grow-1 ds-main-content">
         <Container
           fluid
-          className={`mt-4 px-4 pb-4 dashboard-main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
+          className={`mt-4 px-4 pb-4 dashboard-main-content ds-page ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
         >
           <Outlet />
         </Container>
