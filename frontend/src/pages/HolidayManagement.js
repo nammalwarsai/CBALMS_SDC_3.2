@@ -126,11 +126,13 @@ const HolidayManagement = () => {
 
           <Card className="content-card mb-4">
             <Card.Header className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div className="d-flex align-items-center gap-2">
-                <strong>Holidays for</strong>
+              <div className="d-flex align-items-center gap-3 bg-light p-2 rounded shadow-sm border border-secondary border-opacity-25">
+                <strong className="text-primary mb-0 d-flex align-items-center">
+                  <i className="bi bi-calendar-check me-2"></i>Holidays for:
+                </strong>
                 <Form.Select
-                  size="sm"
-                  style={{ width: 'auto' }}
+                  className="fw-bold text-primary shadow-none border-primary"
+                  style={{ width: '130px', cursor: 'pointer' }}
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                 >
