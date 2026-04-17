@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Container, Card, Button, Spinner } from 'react-bootstrap';
+import { Container, Card, Button, Spinner, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import ThemeToggle from '../components/common/ThemeToggle';
