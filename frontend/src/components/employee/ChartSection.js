@@ -9,7 +9,7 @@ const ChartSection = ({ leaveUsageData, monthlyAttendanceData }) => {
   return (
     <Row className="mb-4">
       <Col lg={6} className="mb-3">
-        <Card className="content-card h-100">
+        <Card className="content-card ds-surface h-100">
           <Card.Header><i className="bi bi-pie-chart me-2"></i><strong>Leave Usage Breakdown</strong></Card.Header>
           <Card.Body className="d-flex align-items-center justify-content-center">
             {leaveUsageData.length > 0 ? (
@@ -31,7 +31,7 @@ const ChartSection = ({ leaveUsageData, monthlyAttendanceData }) => {
         </Card>
       </Col>
       <Col lg={6} className="mb-3">
-        <Card className="content-card h-100">
+        <Card className="content-card ds-surface h-100">
           <Card.Header><i className="bi bi-bar-chart me-2"></i><strong>Monthly Attendance Summary</strong></Card.Header>
           <Card.Body>
             {monthlyAttendanceData.length > 0 ? (
