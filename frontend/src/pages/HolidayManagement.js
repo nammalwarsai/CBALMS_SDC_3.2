@@ -112,95 +112,106 @@ const HolidayManagement = () => {
 
       <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>
         <Container fluid className={`mt-4 px-4 pb-4 dashboard-main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
-              <h2><i className="bi bi-calendar-heart me-2"></i>Holiday Management</h2>
-              <p className="text-muted mb-0">Manage public holidays for the organization</p>
+              <h2 className="ds-title text-primary fw-bold"><i className="bi bi-calendar-heart fs-3 me-2"></i>Holiday Management</h2>
+              <p className="text-muted mb-0 ds-subtitle">Manage public holidays and configure upcoming events</p>
             </div>
-            <div className="d-flex gap-2 align-items-center mt-2 mt-md-0">
-              <Button variant="outline-secondary" onClick={() => navigate('/admin-dashboard')}>
-                <i className="bi bi-arrow-left me-1"></i>Back
+            <div className="d-flex gap-2 align-items-center">
+              <Button variant="light" className="premium-badge text-secondary border-0 bg-white" onClick={() => navigate('/admin-dashboard')}>
+                <i className="bi bi-arrow-left fs-6 me-1"></i>Dashboard
               </Button>
             </div>
           </div>
 
-          <Card className="content-card mb-4">
-            <Card.Header className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div className="d-flex align-items-center gap-3 bg-light p-2 rounded shadow-sm border border-secondary border-opacity-25">
-                <strong className="text-primary mb-0 d-flex align-items-center">
-                  <i className="bi bi-calendar-check me-2"></i>Holidays for:
-                </strong>
-                <Form.Select
-                  className="fw-bold text-primary shadow-none border-primary"
-                  style={{ width: '130px', cursor: 'pointer' }}
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                >
-                  {yearOptions.map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </Form.Select>
-              </div>
-              <div className="d-flex gap-2">
-                <Button variant="outline-primary" size="sm" onClick={handleSeedDefaults} disabled={seeding}>
-                  {seeding ? <Spinner animation="border" size="sm" /> : <i className="bi bi-magic me-1"></i>}
-                  Seed Defaults
-                </Button>
-                <Button variant="primary" size="sm" onClick={() => { setFormData({ name: '', date: '', type: 'public' }); setShowAddModal(true); }}>
-                  <i className="bi bi-plus-lg me-1"></i>Add Holiday
-                </Button>
-              </div>
-            </Card.Header>
-            <Card.Body>
-              {loading ? (
-                <div className="text-center py-5">
-                  <Spinner animation="border" variant="primary" />
-                  <p className="text-muted mt-2">Loading holidays...</p>
-                </div>
-              ) : holidays.length === 0 ? (
-                <div className="text-center py-5">
-                  <i className="bi bi-calendar-x" style={{ fontSize: '2rem' }}></i>
-                  <p className="text-muted mt-2">No holidays configured for {selectedYear}. Click "Seed Defaults" to add standard holidays.</p>
-                </div>
-              ) : (
-                <Table striped bordered hover responsive>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Holiday Name</th>
-                      <th>Date</th>
-                      <th>Day</th>
-                      <th>Type</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {holidays.map((holiday, index) => {
-                      const d = new Date(holiday.date + 'T00:00:00');
-                      const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-                      return (
-                        <tr key={holiday.id}>
-                          <td>{index + 1}</td>
-                          <td><strong>{holiday.name}</strong></td>
-                          <td>{d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
-                          <td><Badge bg="info">{dayName}</Badge></td>
-                          <td><Badge bg={holiday.type === 'bonus' ? 'warning' : 'primary'}>{holiday.type === 'bonus' ? 'Bonus' : 'Public'}</Badge></td>
-                          <td>
-                            <Button variant="outline-primary" size="sm" className="me-1" onClick={() => openEditModal(holiday)}>
+          <div className="admin-toolbar mb-4">
+            <div className="d-flex align-items-center gap-3 bg-white bg-opacity-75 px-3 py-2 border border-secondary border-opacity-25 rounded-pill shadow-sm">
+              <strong className="text-primary mb-0"><i className="bi bi-calendar-event me-2"></i>Year:</strong>
+              <Form.Select
+                className="fw-bold text-primary shadow-none border-0 bg-transparent pe-4"
+                style={{ width: 'auto', minWidth: '90px', cursor: 'pointer', appearance: 'auto' }}
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              >
+                {yearOptions.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </Form.Select>
+            </div>
+            <div className="ms-auto d-flex gap-2">
+              <Button variant="light" className="premium-badge text-primary border-0 bg-primary bg-opacity-10 shadow-sm" onClick={handleSeedDefaults} disabled={seeding}>
+                {seeding ? <Spinner animation="border" size="sm" className="me-2"/> : <i className="bi bi-magic fs-6 me-1"></i>}
+                Seed Defaults
+              </Button>
+              <Button variant="primary" className="premium-badge border-0 shadow-lg text-white" onClick={() => { setFormData({ name: '', date: '', type: 'public' }); setShowAddModal(true); }}>
+                <i className="bi bi-plus-circle-fill fs-6 me-1"></i>New Holiday
+              </Button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner animation="grow" variant="primary" />
+              <p className="text-muted mt-3">Loading holidays...</p>
+            </div>
+          ) : holidays.length === 0 ? (
+            <div className="text-center py-5 bg-white bg-opacity-50 rounded-4 border border-secondary border-opacity-25">
+              <i className="bi bi-calendar-x opacity-25 text-primary mb-3 d-inline-block" style={{ fontSize: '4rem' }}></i>
+              <h4 className="text-dark">No holidays configured for {selectedYear}</h4>
+              <p className="text-muted">Click "Seed Defaults" to automatically add standard holidays.</p>
+            </div>
+          ) : (
+            <div className="premium-table-wrapper">
+              <Table responsive className="premium-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '60px' }}>#</th>
+                    <th>Holiday Title</th>
+                    <th>Date</th>
+                    <th>Day of Week</th>
+                    <th>Category</th>
+                    <th className="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {holidays.map((holiday, index) => {
+                    const d = new Date(holiday.date + 'T00:00:00');
+                    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+                    return (
+                      <tr key={holiday.id}>
+                        <td className="text-muted">{index + 1}</td>
+                        <td>
+                          <div className="d-flex align-items-center">
+                            <div className={`rounded-circle d-flex align-items-center justify-content-center me-3 ${holiday.type === 'bonus' ? 'bg-warning bg-opacity-10 text-warning' : 'bg-primary bg-opacity-10 text-primary'}`} style={{ width: '40px', height: '40px' }}>
+                              <i className={`bi ${holiday.type === 'bonus' ? 'bi-star-fill' : 'bi-calendar-check-fill'}`}></i>
+                            </div>
+                            <strong className="text-dark dark:text-white">{holiday.name}</strong>
+                          </div>
+                        </td>
+                        <td className="fw-medium">{d.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                        <td><span className="premium-badge secondary text-capitalize border-0 bg-secondary bg-opacity-10">{dayName}</span></td>
+                        <td>
+                          <span className={`premium-badge ${holiday.type === 'bonus' ? 'warning' : 'info'} border-0`}>
+                            {holiday.type === 'bonus' ? 'Bonus Leave' : 'Public Holiday'}
+                          </span>
+                        </td>
+                        <td className="text-end">
+                          <div className="d-flex justify-content-end gap-2">
+                            <Button variant="light" size="sm" className="rounded-circle text-primary border border-primary border-opacity-25 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }} onClick={() => openEditModal(holiday)}>
                               <i className="bi bi-pencil"></i>
                             </Button>
-                            <Button variant="outline-danger" size="sm" onClick={() => handleDelete(holiday.id)}>
+                            <Button variant="light" size="sm" className="rounded-circle text-danger border border-danger border-opacity-25 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }} onClick={() => handleDelete(holiday.id)}>
                               <i className="bi bi-trash"></i>
                             </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </Table>
-              )}
-            </Card.Body>
-          </Card>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
+          )}
         </Container>
       </div>
 

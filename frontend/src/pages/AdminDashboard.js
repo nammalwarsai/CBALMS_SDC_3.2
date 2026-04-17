@@ -317,64 +317,37 @@ const [processingLeave, setProcessingLeave] = useState(false);
       {/* Main Content */}
       <div className="main-content flex-grow-1 ds-main-content">
         <Container fluid className={`mt-4 px-4 pb-4 dashboard-main-content ds-page ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-          {/* Header */}
-          <div className="dashboard-header ds-header mb-4">
-            <div className="d-flex justify-content-between align-items-center flex-wrap">
+          {/* ── Admin Premium Hero Banner ── */}
+          <div className="admin-hero-banner">
+            <div className="admin-hero-overlay"></div>
+            <div className="admin-hero-content">
               <div>
-                <h2 className="ds-title"><i className="bi bi-shield-check me-2"></i>Admin Dashboard</h2>
-                <p className="mb-0 ds-subtitle">{getGreeting()}, {user ? user.name : 'Admin'}! ({user?.email})</p>
+                <h1 className="admin-hero-title">
+                  {getGreeting()}, {user ? user.name.split(' ')[0] : 'Admin'}!
+                </h1>
+                <p className="admin-hero-subtitle mb-0">
+                  <i className="bi bi-shield-check me-2 text-warning"></i>
+                  System Administrator &bull; Manage your organization's resources
+                </p>
               </div>
-              <div className="mt-3 mt-md-0 d-flex ds-header-actions flex-wrap d-none d-lg-flex align-items-center">
-                <ThemeToggle />
-                <NotificationBell />
-                <OverlayTrigger placement="bottom" overlay={<Tooltip>View and edit your profile</Tooltip>}>
-                  <Button variant="info" className="ds-action-btn" onClick={() => navigate('/profile')} aria-label="My Profile">
-                    <i className="bi bi-person me-1"></i>My Profile
-                  </Button>
-                </OverlayTrigger>
-                <OverlayTrigger placement="bottom" overlay={<Tooltip>View today's leaves</Tooltip>}>
-                  <Button variant="warning" className="ds-action-btn" onClick={handleOpenTodayLeavesModal} aria-label="Today's Leaves">
-                    <i className="bi bi-calendar-event me-1"></i>Today's Leaves ({dashboardStats.onLeave})
-                  </Button>
-                </OverlayTrigger>
-                <OverlayTrigger placement="bottom" overlay={<Tooltip>Manage leave requests</Tooltip>}>
-                  <Button variant="primary" className="ds-action-btn" onClick={handleOpenLeaveModal} aria-label="Leave Requests">
-                    <i className="bi bi-envelope me-1"></i>Leave Requests {pendingLeaves.length > 0 && <Badge bg="danger" className="ms-1">{pendingLeaves.length}</Badge>}
-                  </Button>
-                </OverlayTrigger>
-                <Button variant="danger" className="ds-action-btn" onClick={handleLogout} aria-label="Logout">
-                  <i className="bi bi-box-arrow-right me-1"></i>Log Out
+              
+              <div className="d-flex gap-3 mt-3 mt-md-0 flex-wrap">
+                <div className="d-flex align-items-center gap-2 me-2">
+                  <ThemeToggle />
+                  <NotificationBell />
+                </div>
+                <Button variant="light" className="premium-badge text-dark fw-bold border-0 shadow-lg" onClick={() => navigate('/profile')} style={{ padding: '0.5rem 1rem' }}>
+                  <i className="bi bi-person-circle fs-6 me-1"></i>Profile
+                </Button>
+                <Button variant="warning" className="premium-badge border-0 shadow-lg" onClick={handleOpenTodayLeavesModal} style={{ padding: '0.5rem 1rem' }}>
+                  <i className="bi bi-calendar2-x fs-6 me-1"></i>Off Today <Badge bg="dark" className="ms-1">{dashboardStats.onLeave}</Badge>
+                </Button>
+                <Button variant="info" className="premium-badge text-white border-0 bg-info shadow-lg" onClick={handleOpenLeaveModal} style={{ padding: '0.5rem 1rem' }}>
+                  <i className="bi bi-envelope-paper fs-6 me-1"></i>Leaves {pendingLeaves.length > 0 && <Badge bg="danger" className="ms-1">{pendingLeaves.length}</Badge>}
                 </Button>
               </div>
             </div>
           </div>
-
-          {/* Quick Actions - visible on mobile */}
-          <Card className="content-card ds-surface mb-4 d-lg-none">
-            <Card.Body className="py-3">
-              <Row className="text-center g-2">
-                <Col xs={4}>
-                  <Button variant="info" className="w-100 py-2 mb-2 ds-action-btn" onClick={() => navigate('/profile')}>
-                    <i className="bi bi-person me-1"></i>Profile
-                  </Button>
-                  <div className="d-flex justify-content-center gap-2">
-                    <ThemeToggle />
-                    <NotificationBell />
-                  </div>
-                </Col>
-                <Col xs={4}>
-                  <Button variant="warning" className="w-100 py-2 ds-action-btn" onClick={handleOpenTodayLeavesModal}>
-                    <i className="bi bi-calendar-event me-1"></i>Leaves
-                  </Button>
-                </Col>
-                <Col xs={4}>
-                  <Button variant="primary" className="w-100 py-2 ds-action-btn" onClick={handleOpenLeaveModal}>
-                    <i className="bi bi-envelope me-1"></i>Requests
-                  </Button>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
 
           {/* Stats Row */}
           <AdminStatsCards

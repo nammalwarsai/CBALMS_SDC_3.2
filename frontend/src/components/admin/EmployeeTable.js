@@ -28,62 +28,67 @@ const EmployeeTable = ({ employees, loading, onViewDetails, onExportCSV, onDownl
   }, [employees, searchTerm, departmentFilter]);
 
   return (
-    <Card className="content-card ds-surface">
-      <Card.Header className="d-flex justify-content-between align-items-center flex-wrap">
-        <strong><i className="bi bi-people me-2"></i>All Employees</strong>
-        <div className="d-flex gap-2 align-items-center mt-2 mt-md-0">
-          <Button variant="outline-success" size="sm" className="ds-action-btn" onClick={onExportCSV} aria-label="Export Employees CSV">
-            <i className="bi bi-filetype-csv me-1"></i>CSV
-          </Button>
-          <Button variant="outline-primary" size="sm" className="ds-action-btn" onClick={() => onDownloadReport('daily')} aria-label="Download Daily Report">
-            <i className="bi bi-file-pdf me-1"></i>Daily
-          </Button>
-          <Button variant="outline-info" size="sm" className="ds-action-btn" onClick={() => onDownloadReport('monthly')} aria-label="Download Monthly Report">
-            <i className="bi bi-file-pdf me-1"></i>Monthly
-          </Button>
-          <span className="badge bg-primary ms-2 ds-chip-count">{filteredEmployees.length} of {employees.length}</span>
+    <div className="mb-5">
+      {/* Search and Filter Toolbar (Floating) */}
+      <div className="admin-toolbar">
+        <div className="d-flex align-items-center me-auto">
+          <strong><i className="bi bi-people-fill text-primary me-2 fs-5"></i>All Employees</strong>
+          <Badge bg="primary" className="ms-2 rounded-pill px-3">{filteredEmployees.length}</Badge>
         </div>
-      </Card.Header>
-      <Card.Body>
-        {/* Search and Filter Bar (UI-02) */}
-        <Row className="mb-3 g-2">
-          <Col md={6} lg={4}>
+        
+        <div className="d-flex flex-wrap gap-2 align-items-center">
+          <div style={{ minWidth: '200px' }}>
             <Form.Control
               type="text"
-              placeholder="Search by name, ID, or department..."
+              placeholder="Search employees..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               aria-label="Search employees"
+              className="border-secondary border-opacity-25 bg-white bg-opacity-75"
             />
-          </Col>
-          <Col md={4} lg={3}>
+          </div>
+          <div style={{ minWidth: '180px' }}>
             <Form.Select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
               aria-label="Filter by department"
+              className="border-secondary border-opacity-25 bg-white bg-opacity-75"
             >
               <option value="">All Departments</option>
               {departments.map(dept => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
             </Form.Select>
-          </Col>
+          </div>
           {(searchTerm || departmentFilter) && (
-            <Col md={2} lg={2}>
-              <Button variant="outline-secondary" className="w-100 ds-action-btn" onClick={() => { setSearchTerm(''); setDepartmentFilter(''); }}>
-                <i className="bi bi-x-lg me-1"></i>Clear
-              </Button>
-            </Col>
+            <Button variant="light" className="text-secondary border-0" onClick={() => { setSearchTerm(''); setDepartmentFilter(''); }}>
+              <i className="bi bi-x-lg"></i>
+            </Button>
           )}
-        </Row>
 
+          {/* Export Actions */}
+          <div className="ms-md-3 d-flex gap-2 border-start ps-md-3 border-secondary border-opacity-25">
+            <Button variant="light" className="premium-badge text-success border-0 bg-success bg-opacity-10 shadow-sm" onClick={onExportCSV} aria-label="Export CSV">
+              <i className="bi bi-filetype-csv fs-6 me-1"></i>CSV
+            </Button>
+            <Button variant="light" className="premium-badge text-primary border-0 bg-primary bg-opacity-10 shadow-sm" onClick={() => onDownloadReport('daily')} aria-label="Daily Report">
+              <i className="bi bi-calendar2-day fs-6 me-1"></i>Daily
+            </Button>
+            <Button variant="light" className="premium-badge text-info border-0 bg-info bg-opacity-10 shadow-sm" onClick={() => onDownloadReport('monthly')} aria-label="Monthly Report">
+              <i className="bi bi-calendar-month fs-6 me-1"></i>Monthly
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="premium-table-wrapper">
         {loading ? (
-          <Table striped bordered hover responsive className="ds-table">
+          <Table responsive className="premium-table">
             <thead><tr><th>Name</th><th>Department</th><th>Employee ID</th><th>Mobile</th><th>Status</th><th>Action</th></tr></thead>
             <tbody><TableRowSkeleton columns={6} rows={5} /></tbody>
           </Table>
         ) : (
-          <Table striped bordered hover responsive className="ds-table">
+          <Table responsive className="premium-table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -91,33 +96,46 @@ const EmployeeTable = ({ employees, loading, onViewDetails, onExportCSV, onDownl
                 <th>Employee ID</th>
                 <th>Mobile</th>
                 <th>Current Status</th>
-                <th>Action</th>
+                <th className="text-end">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredEmployees.length === 0 ? (
-                <tr><td colSpan="6" className="text-center text-muted py-4"><i className="bi bi-inbox me-2"></i>{searchTerm || departmentFilter ? 'No matching employees found' : 'No employees found'}</td></tr>
+                <tr>
+                  <td colSpan="6" className="text-center text-muted py-5">
+                    <i className="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                    {searchTerm || departmentFilter ? 'No matching employees found' : 'No employees found'}
+                  </td>
+                </tr>
               ) : (
                 filteredEmployees.map((emp) => (
                   <tr key={emp.id}>
-                    <td><strong>{emp.full_name}</strong></td>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold" style={{ width: '40px', height: '40px' }}>
+                          {emp.full_name?.charAt(0).toUpperCase()}
+                        </div>
+                        <strong className="text-dark dark:text-white">{emp.full_name}</strong>
+                      </div>
+                    </td>
                     <td>{emp.department}</td>
-                    <td>{emp.employee_id}</td>
+                    <td className="font-monospace text-muted">{emp.employee_id}</td>
                     <td>{emp.mobile_number}</td>
                     <td>
-                      <Badge bg={emp.present_status_of_employee === 'Present' ? 'success' : 'secondary'}>
+                      <span className={`premium-badge ${emp.present_status_of_employee === 'Present' ? 'success' : 'secondary'}`}>
+                        <i className={`bi ${emp.present_status_of_employee === 'Present' ? 'bi-check-circle-fill' : 'bi-dash-circle-fill'}`}></i>
                         {emp.present_status_of_employee || 'Absent'}
-                      </Badge>
+                      </span>
                     </td>
-                    <td>
+                    <td className="text-end">
                       <Button
                         size="sm"
-                        variant="info"
-                        className="ds-action-btn"
+                        variant="light"
+                        className="rounded-pill text-primary fw-bold px-3 border border-primary border-opacity-25"
                         onClick={() => onViewDetails(emp.id)}
                         aria-label={`View details for ${emp.full_name}`}
                       >
-                        <i className="bi bi-eye me-1"></i>Details
+                        <i className="bi bi-eye me-1"></i>View
                       </Button>
                     </td>
                   </tr>
@@ -126,8 +144,8 @@ const EmployeeTable = ({ employees, loading, onViewDetails, onExportCSV, onDownl
             </tbody>
           </Table>
         )}
-      </Card.Body>
-    </Card>
+      </div>
+    </div>
   );
 };
 
