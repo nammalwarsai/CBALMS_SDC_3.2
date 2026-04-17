@@ -310,39 +310,39 @@ const [processingLeave, setProcessingLeave] = useState(false);
   };
 
   return (
-    <div className="d-flex">
+    <div className="d-flex ds-page-shell">
       {/* Sidebar */}
       <Sidebar user={user} onLogout={handleLogout} isAdmin={true} collapsed={sidebarCollapsed} onToggle={handleSidebarToggle} />
 
       {/* Main Content */}
-      <div className="main-content flex-grow-1" style={{ marginLeft: '0' }}>
-        <Container fluid className={`mt-4 px-4 pb-4 dashboard-main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className="main-content flex-grow-1 ds-main-content">
+        <Container fluid className={`mt-4 px-4 pb-4 dashboard-main-content ds-page ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           {/* Header */}
-          <div className="dashboard-header mb-4">
+          <div className="dashboard-header ds-header mb-4">
             <div className="d-flex justify-content-between align-items-center flex-wrap">
               <div>
-                <h2><i className="bi bi-shield-check me-2"></i>Admin Dashboard</h2>
-                <p className="text-muted mb-0">{getGreeting()}, {user ? user.name : 'Admin'}! ({user?.email})</p>
+                <h2 className="ds-title"><i className="bi bi-shield-check me-2"></i>Admin Dashboard</h2>
+                <p className="mb-0 ds-subtitle">{getGreeting()}, {user ? user.name : 'Admin'}! ({user?.email})</p>
               </div>
-              <div className="mt-3 mt-md-0 d-flex gap-2 flex-wrap d-none d-lg-flex align-items-center">
+              <div className="mt-3 mt-md-0 d-flex ds-header-actions flex-wrap d-none d-lg-flex align-items-center">
                 <ThemeToggle />
                 <NotificationBell />
                 <OverlayTrigger placement="bottom" overlay={<Tooltip>View and edit your profile</Tooltip>}>
-                  <Button variant="info" onClick={() => navigate('/profile')} aria-label="My Profile">
+                  <Button variant="info" className="ds-action-btn" onClick={() => navigate('/profile')} aria-label="My Profile">
                     <i className="bi bi-person me-1"></i>My Profile
                   </Button>
                 </OverlayTrigger>
                 <OverlayTrigger placement="bottom" overlay={<Tooltip>View today's leaves</Tooltip>}>
-                  <Button variant="warning" onClick={handleOpenTodayLeavesModal} aria-label="Today's Leaves">
+                  <Button variant="warning" className="ds-action-btn" onClick={handleOpenTodayLeavesModal} aria-label="Today's Leaves">
                     <i className="bi bi-calendar-event me-1"></i>Today's Leaves ({dashboardStats.onLeave})
                   </Button>
                 </OverlayTrigger>
                 <OverlayTrigger placement="bottom" overlay={<Tooltip>Manage leave requests</Tooltip>}>
-                  <Button variant="primary" onClick={handleOpenLeaveModal} aria-label="Leave Requests">
+                  <Button variant="primary" className="ds-action-btn" onClick={handleOpenLeaveModal} aria-label="Leave Requests">
                     <i className="bi bi-envelope me-1"></i>Leave Requests {pendingLeaves.length > 0 && <Badge bg="danger" className="ms-1">{pendingLeaves.length}</Badge>}
                   </Button>
                 </OverlayTrigger>
-                <Button variant="danger" onClick={handleLogout} aria-label="Logout">
+                <Button variant="danger" className="ds-action-btn" onClick={handleLogout} aria-label="Logout">
                   <i className="bi bi-box-arrow-right me-1"></i>Log Out
                 </Button>
               </div>
@@ -350,11 +350,11 @@ const [processingLeave, setProcessingLeave] = useState(false);
           </div>
 
           {/* Quick Actions - visible on mobile */}
-          <Card className="content-card mb-4 d-lg-none">
+          <Card className="content-card ds-surface mb-4 d-lg-none">
             <Card.Body className="py-3">
               <Row className="text-center g-2">
                 <Col xs={4}>
-                  <Button variant="info" className="w-100 py-2 mb-2" onClick={() => navigate('/profile')}>
+                  <Button variant="info" className="w-100 py-2 mb-2 ds-action-btn" onClick={() => navigate('/profile')}>
                     <i className="bi bi-person me-1"></i>Profile
                   </Button>
                   <div className="d-flex justify-content-center gap-2">
@@ -363,12 +363,12 @@ const [processingLeave, setProcessingLeave] = useState(false);
                   </div>
                 </Col>
                 <Col xs={4}>
-                  <Button variant="warning" className="w-100 py-2" onClick={handleOpenTodayLeavesModal}>
+                  <Button variant="warning" className="w-100 py-2 ds-action-btn" onClick={handleOpenTodayLeavesModal}>
                     <i className="bi bi-calendar-event me-1"></i>Leaves
                   </Button>
                 </Col>
                 <Col xs={4}>
-                  <Button variant="primary" className="w-100 py-2" onClick={handleOpenLeaveModal}>
+                  <Button variant="primary" className="w-100 py-2 ds-action-btn" onClick={handleOpenLeaveModal}>
                     <i className="bi bi-envelope me-1"></i>Requests
                   </Button>
                 </Col>
@@ -399,7 +399,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
 
           {/* Employee Details Modal */}
           <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
-            <Modal.Header closeButton>
+            <Modal.Header closeButton className="ds-modal-header ds-modal-header--primary">
               <Modal.Title>Employee Details</Modal.Title>
             </Modal.Header>
             <Modal.Body>
@@ -438,7 +438,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
                   <Row className="mt-4">
                     <Col>
                       <h5 className="mb-3">Recent Attendance</h5>
-                      <Table size="sm" bordered>
+                       <Table size="sm" bordered className="ds-table">
                         <thead>
                           <tr>
                             <th>Date</th>
@@ -470,7 +470,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
                   </Row>
                   <Row className="mt-3">
                     <Col className="text-end">
-                      <Button variant="success" onClick={downloadEmployeeHistory}>
+                      <Button variant="success" className="ds-action-btn" onClick={downloadEmployeeHistory}>
                         Download Full Attendance History
                       </Button>
                     </Col>
@@ -479,7 +479,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
               )}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+              <Button variant="secondary" className="ds-action-btn" onClick={() => setShowDetailsModal(false)}>
                 Close
               </Button>
             </Modal.Footer>
@@ -487,12 +487,10 @@ const [processingLeave, setProcessingLeave] = useState(false);
 
           {/* Present/Absent Employees List Modal */}
           <Modal show={showAttendanceListModal} onHide={() => setShowAttendanceListModal(false)} size="lg">
-            <Modal.Header closeButton style={{
-              background: attendanceListType === 'present'
-                ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-              color: 'white'
-            }}>
+            <Modal.Header
+              closeButton
+              className={`ds-modal-header ${attendanceListType === 'present' ? 'ds-modal-header--success' : 'ds-modal-header--danger'}`}
+            >
               <Modal.Title>
                 <i className={`bi ${attendanceListType === 'present' ? 'bi-check-circle' : 'bi-x-circle'} me-2`}></i>
                 {attendanceListType === 'present' ? 'Present Today' : 'Absent Today'} ({attendanceListData.length})
@@ -513,7 +511,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
                   </p>
                 </div>
               ) : (
-                <Table striped bordered hover responsive>
+                <Table striped bordered hover responsive className="ds-table">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -540,7 +538,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
               )}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowAttendanceListModal(false)}>
+              <Button variant="secondary" className="ds-action-btn" onClick={() => setShowAttendanceListModal(false)}>
                 Close
               </Button>
             </Modal.Footer>
@@ -548,31 +546,35 @@ const [processingLeave, setProcessingLeave] = useState(false);
 
           {/* Leave Requests Management Modal */}
           <Modal show={showLeaveModal} onHide={() => setShowLeaveModal(false)} size="xl">
-            <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: 'white' }}>
+            <Modal.Header closeButton className="ds-modal-header ds-modal-header--primary">
               <Modal.Title><i className="bi bi-envelope-paper me-2"></i>Leave Requests Management</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <div className="mb-3 d-flex gap-2">
+              <div className="mb-3 d-flex gap-2 ds-filter-group flex-wrap">
                 <Button
                   variant={leaveFilter === 'Pending' ? 'warning' : 'outline-warning'}
+                  className="ds-action-btn"
                   onClick={() => handleLeaveFilterChange('Pending')}
                 >
                   Pending
                 </Button>
                 <Button
                   variant={leaveFilter === 'Approved' ? 'success' : 'outline-success'}
+                  className="ds-action-btn"
                   onClick={() => handleLeaveFilterChange('Approved')}
                 >
                   Approved
                 </Button>
                 <Button
                   variant={leaveFilter === 'Rejected' ? 'danger' : 'outline-danger'}
+                  className="ds-action-btn"
                   onClick={() => handleLeaveFilterChange('Rejected')}
                 >
                   Rejected
                 </Button>
                 <Button
                   variant={leaveFilter === 'All' ? 'primary' : 'outline-primary'}
+                  className="ds-action-btn"
                   onClick={() => handleLeaveFilterChange('All')}
                 >
                   All
@@ -584,7 +586,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
                   <p className="text-muted">No {leaveFilter !== 'All' ? leaveFilter.toLowerCase() : ''} leave requests found.</p>
                 </div>
               ) : (
-                <Table striped bordered hover responsive>
+                <Table striped bordered hover responsive className="ds-table">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -629,6 +631,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
                                 <Button
                                   size="sm"
                                   variant="success"
+                                  className="ds-action-btn"
                                   disabled={processingLeave}
                                   onClick={() => handleApproveLeave(leave.id)}
                                   aria-label={`Approve leave for ${leave.profiles?.full_name}`}
@@ -638,6 +641,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
                                 <Button
                                   size="sm"
                                   variant="danger"
+                                  className="ds-action-btn"
                                   disabled={processingLeave}
                                   onClick={() => handleRejectLeave(leave.id)}
                                   aria-label={`Reject leave for ${leave.profiles?.full_name}`}
@@ -670,7 +674,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
               )}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowLeaveModal(false)}>
+              <Button variant="secondary" className="ds-action-btn" onClick={() => setShowLeaveModal(false)}>
                 Close
               </Button>
             </Modal.Footer>
@@ -678,7 +682,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
 
           {/* Today's Leaves Modal */}
           <Modal show={showTodayLeavesModal} onHide={() => setShowTodayLeavesModal(false)} size="lg">
-            <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
+            <Modal.Header closeButton className="ds-modal-header ds-modal-header--warning">
               <Modal.Title><i className="bi bi-calendar-event me-2"></i>Today's Leaves ({todayLeaves.length})</Modal.Title>
             </Modal.Header>
             <Modal.Body>
@@ -687,7 +691,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
                   <p className="text-muted">No employees are on leave today.</p>
                 </div>
               ) : (
-                <Table striped bordered hover responsive>
+                <Table striped bordered hover responsive className="ds-table">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -722,7 +726,7 @@ const [processingLeave, setProcessingLeave] = useState(false);
               )}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowTodayLeavesModal(false)}>
+              <Button variant="secondary" className="ds-action-btn" onClick={() => setShowTodayLeavesModal(false)}>
                 Close
               </Button>
             </Modal.Footer>
